@@ -10,7 +10,7 @@ import {
   useToast,
   VStack,
 } from '@chakra-ui/react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 interface AddTodoProps {
   onAdd: (text: string, dueDate: string | null) => void;
@@ -26,33 +26,62 @@ function AddTodo({ onAdd }: AddTodoProps) {
   });
   const toast = useToast();
 
-  const setQuickDate = (days: number) => {
+  const setQuickDate = useCallback((days: number) => {
     const date = new Date();
     date.setDate(date.getDate() + days);
     date.setHours(9, 0, 0, 0);
     setDueDate(date.toISOString().split('.')[0].slice(0, 16));
-  };
+  }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!text.trim()) {
-      toast({
-        title: '할 일을 입력해주세요',
-        status: 'warning',
-        duration: 2000,
-        isClosable: true,
-      });
-      return;
-    }
+  const handleTextChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setText(e.target.value);
+    },
+    []
+  );
 
-    onAdd(text, dueDate);
+  const handleDateChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const [date] = dueDate.split('T');
+      setDueDate(`${e.target.value}T${date.split('T')[1]}`);
+    },
+    [dueDate]
+  );
+
+  const handleTimeChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const [date] = dueDate.split('T');
+      setDueDate(`${date}T${e.target.value}`);
+    },
+    [dueDate]
+  );
+
+  const resetForm = useCallback(() => {
     setText('');
-    // 입력 후 다시 내일 오전 9시로 초기화
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(9, 0, 0, 0);
     setDueDate(tomorrow.toISOString().split('.')[0].slice(0, 16));
-  };
+  }, []);
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!text.trim()) {
+        toast({
+          title: '할 일을 입력해주세요',
+          status: 'warning',
+          duration: 2000,
+          isClosable: true,
+        });
+        return;
+      }
+
+      onAdd(text, dueDate);
+      resetForm();
+    },
+    [text, dueDate, onAdd, toast, resetForm]
+  );
 
   return (
     <form onSubmit={handleSubmit} style={{ width: '100%' }}>
@@ -61,7 +90,7 @@ function AddTodo({ onAdd }: AddTodoProps) {
           <FormLabel>할 일</FormLabel>
           <Input
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={handleTextChange}
             placeholder="할 일을 입력하세요..."
             size="lg"
           />
@@ -121,10 +150,7 @@ function AddTodo({ onAdd }: AddTodoProps) {
                 <Input
                   type="date"
                   value={dueDate.split('T')[0]}
-                  onChange={(e) => {
-                    const [date] = dueDate.split('T');
-                    setDueDate(`${e.target.value}T${date.split('T')[1]}`);
-                  }}
+                  onChange={handleDateChange}
                   size="lg"
                   min={new Date().toISOString().split('T')[0]}
                 />
@@ -133,10 +159,7 @@ function AddTodo({ onAdd }: AddTodoProps) {
                 <Input
                   type="time"
                   value={dueDate.split('T')[1]}
-                  onChange={(e) => {
-                    const [date] = dueDate.split('T');
-                    setDueDate(`${date}T${e.target.value}`);
-                  }}
+                  onChange={handleTimeChange}
                   size="lg"
                 />
               </GridItem>
