@@ -91,7 +91,6 @@ const TodoItem = ({
         <HStack
           ref={provided.innerRef}
           {...provided.draggableProps}
-          {...provided.dragHandleProps}
           p={4}
           bg="white"
           borderRadius="md"
@@ -100,7 +99,30 @@ const TodoItem = ({
           spacing={4}
           transition="all 0.2s"
           transform={snapshot.isDragging ? 'scale(1.02)' : 'none'}
+          position="relative"
         >
+          <Box
+            {...provided.dragHandleProps}
+            as="span"
+            display="flex"
+            alignItems="center"
+            cursor="grab"
+            p={2}
+            borderRadius="md"
+            _hover={{ bg: 'gray.50' }}
+            _active={{ cursor: 'grabbing' }}
+          >
+            <Box
+              width="24px"
+              height="24px"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              color="gray.400"
+            >
+              ⋮⋮
+            </Box>
+          </Box>
           <Box
             as="span"
             display="flex"

@@ -7,13 +7,6 @@ import type { Todo } from './types';
 // 로컬 스토리지 키
 const STORAGE_KEY = 'todos';
 
-interface TodoListProps {
-  todos: Todo[];
-  onToggle: (id: number) => void;
-  onDelete: (id: number) => void;
-  onReorder: (startIndex: number, endIndex: number) => void;
-}
-
 function App() {
   // 초기 상태를 로컬 스토리지에서 불러오기
   const [todos, setTodos] = useState<Todo[]>(() => {
