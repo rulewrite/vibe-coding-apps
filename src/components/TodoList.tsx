@@ -94,6 +94,16 @@ const TodoItem = ({
   const [clickCount, setClickCount] = useState(0);
   const [showSecret, setShowSecret] = useState(false);
 
+  // 비밀 메시지 이스터에그 감지
+  useEffect(() => {
+    const text = todo.text.toLowerCase();
+    if (text.includes('secret') || text.includes('비밀')) {
+      setShowSecret(true);
+      const timer = setTimeout(() => setShowSecret(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [todo.text]);
+
   // 이스터에그: Konami 코드 감지
   useEffect(() => {
     const konamiCode = [
@@ -151,7 +161,6 @@ const TodoItem = ({
     });
   }, [toast, toggleColorMode]);
 
-  // 이스터에그: 특정 텍스트 입력 시 반응
   const handleTextChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const text = e.target.value.toLowerCase();
@@ -163,9 +172,6 @@ const TodoItem = ({
           duration: 3000,
           isClosable: true,
         });
-      } else if (text.includes('secret') || text.includes('비밀')) {
-        setShowSecret(true);
-        setTimeout(() => setShowSecret(false), 2000);
       }
       setEditText(e.target.value);
     },
