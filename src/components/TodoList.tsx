@@ -203,10 +203,8 @@ function TodoList({ todos, onToggle, onDelete, onReorder }: TodoListProps) {
 
       if (startIndex === endIndex) return;
 
-      // 애니메이션이 완료된 후에 순서 변경
-      requestAnimationFrame(() => {
-        onReorder(startIndex, endIndex);
-      });
+      // 즉시 순서 변경 적용
+      onReorder(startIndex, endIndex);
     },
     [onReorder]
   );
@@ -220,7 +218,6 @@ function TodoList({ todos, onToggle, onDelete, onReorder }: TodoListProps) {
               ref={provided.innerRef}
               {...provided.droppableProps}
               width="100%"
-              transition="all 0.2s ease"
             >
               <VStack spacing={4} width="100%" align="stretch">
                 {todos.map((todo, index) => (
