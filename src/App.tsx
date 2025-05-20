@@ -68,15 +68,18 @@ function App() {
     });
   }, []);
 
-  const updateTodo = useCallback((id: number, newText: string) => {
-    setTodos((prevTodos) => {
-      const updatedTodos = prevTodos.map((todo) =>
-        todo.id === id ? { ...todo, text: newText } : todo
-      );
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTodos));
-      return updatedTodos;
-    });
-  }, []);
+  const updateTodo = useCallback(
+    (id: number, updates: { text?: string; dueDate?: string | null }) => {
+      setTodos((prevTodos) => {
+        const updatedTodos = prevTodos.map((todo) =>
+          todo.id === id ? { ...todo, ...updates } : todo
+        );
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTodos));
+        return updatedTodos;
+      });
+    },
+    []
+  );
 
   return (
     <ChakraProvider>
