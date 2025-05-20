@@ -7,7 +7,7 @@ import {
   useToast,
   VStack,
 } from '@chakra-ui/react';
-import { Todo } from '../App';
+import type { Todo } from '../types';
 
 interface TodoListProps {
   todos: Todo[];

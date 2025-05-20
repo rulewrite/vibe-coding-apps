@@ -2,12 +2,7 @@ import { ChakraProvider, Container, Heading, VStack } from '@chakra-ui/react';
 import { useState } from 'react';
 import AddTodo from './components/AddTodo';
 import TodoList from './components/TodoList';
-
-export interface Todo {
-  id: number;
-  text: string;
-  completed: boolean;
-}
+import type { Todo } from './types';
 
 function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
