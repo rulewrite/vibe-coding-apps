@@ -7,6 +7,13 @@ import type { Todo } from './types';
 // 로컬 스토리지 키
 const STORAGE_KEY = 'todos';
 
+interface TodoListProps {
+  todos: Todo[];
+  onToggle: (id: number) => void;
+  onDelete: (id: number) => void;
+  onReorder: (startIndex: number, endIndex: number) => void;
+}
+
 function App() {
   // 초기 상태를 로컬 스토리지에서 불러오기
   const [todos, setTodos] = useState<Todo[]>(() => {
@@ -53,13 +60,27 @@ function App() {
     setTodos((prevTodos) => prevTodos.filter((todo) => todo.id !== id));
   }, []);
 
+  const reorderTodos = useCallback((startIndex: number, endIndex: number) => {
+    setTodos((prevTodos) => {
+      const result = Array.from(prevTodos);
+      const [removed] = result.splice(startIndex, 1);
+      result.splice(endIndex, 0, removed);
+      return result;
+    });
+  }, []);
+
   return (
     <ChakraProvider>
       <Container maxW="container.md" py={10}>
         <VStack spacing={8}>
           <Heading>TODO 앱</Heading>
           <AddTodo onAdd={addTodo} />
-          <TodoList todos={todos} onToggle={toggleTodo} onDelete={deleteTodo} />
+          <TodoList
+            todos={todos}
+            onToggle={toggleTodo}
+            onDelete={deleteTodo}
+            onReorder={reorderTodos}
+          />
         </VStack>
       </Container>
     </ChakraProvider>

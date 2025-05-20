@@ -9,13 +9,16 @@ import {
   useToast,
   VStack,
 } from '@chakra-ui/react';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
+import type { DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import type { Todo } from '../types';
 
 interface TodoListProps {
   todos: Todo[];
   onToggle: (id: number) => void;
   onDelete: (id: number) => void;
+  onReorder: (startIndex: number, endIndex: number) => void;
 }
 
 const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
@@ -33,10 +36,12 @@ const TOAST_DURATION = 2000;
 
 const TodoItem = ({
   todo,
+  index,
   onToggle,
   onDelete,
 }: {
   todo: Todo;
+  index: number;
   onToggle: (id: number) => void;
   onDelete: (id: number) => void;
 }) => {
@@ -80,96 +85,116 @@ const TodoItem = ({
     return 'green';
   }, []);
 
-  const formattedDate = useMemo(
-    () => (todo.dueDate ? formatDate(todo.dueDate) : null),
-    [todo.dueDate, formatDate]
-  );
-
-  const dateStatus = useMemo(
-    () => (todo.dueDate ? getDateStatus(todo.dueDate) : null),
-    [todo.dueDate, getDateStatus]
-  );
-
   return (
-    <HStack
-      p={4}
-      bg="white"
-      borderRadius="md"
-      boxShadow="sm"
-      _hover={{ boxShadow: 'md' }}
-      spacing={4}
-      transition="all 0.2s"
-    >
-      <Box
-        as="span"
-        display="flex"
-        alignItems="center"
-        cursor="pointer"
-        p={2}
-        borderRadius="md"
-      >
-        <Checkbox
-          isChecked={todo.completed}
-          onChange={handleCheckboxChange}
-          colorScheme="blue"
-          size="lg"
-          padding={2}
-        />
-      </Box>
-      <VStack flex={1} align="start" spacing={1}>
-        <Text
-          textDecoration={todo.completed ? 'line-through' : 'none'}
-          color={todo.completed ? 'gray.500' : 'black'}
-          fontSize="lg"
+    <Draggable draggableId={todo.id.toString()} index={index}>
+      {(provided, snapshot) => (
+        <HStack
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          p={4}
+          bg="white"
+          borderRadius="md"
+          boxShadow={snapshot.isDragging ? 'lg' : 'sm'}
+          _hover={{ boxShadow: 'md' }}
+          spacing={4}
+          transition="all 0.2s"
+          transform={snapshot.isDragging ? 'scale(1.02)' : 'none'}
         >
-          {todo.text}
-        </Text>
-        {formattedDate && (
-          <Badge
-            colorScheme={dateStatus || 'gray'}
-            fontSize="sm"
-            px={2}
-            py={1}
+          <Box
+            as="span"
+            display="flex"
+            alignItems="center"
+            cursor="pointer"
+            p={2}
             borderRadius="md"
           >
-            마감일: {formattedDate}
-          </Badge>
-        )}
-      </VStack>
-      <Box as="span" display="flex" alignItems="center">
-        <IconButton
-          aria-label="Delete todo"
-          icon={<DeleteIcon />}
-          onClick={handleDelete}
-          colorScheme="red"
-          variant="ghost"
-          size="lg"
-          padding={2}
-          _hover={{ bg: 'red.50' }}
-        />
-      </Box>
-    </HStack>
+            <Checkbox
+              isChecked={todo.completed}
+              onChange={handleCheckboxChange}
+              colorScheme="blue"
+              size="lg"
+              padding={2}
+            />
+          </Box>
+          <VStack flex={1} align="start" spacing={1}>
+            <Text
+              textDecoration={todo.completed ? 'line-through' : 'none'}
+              color={todo.completed ? 'gray.500' : 'black'}
+              fontSize="lg"
+            >
+              {todo.text}
+            </Text>
+            {todo.dueDate && (
+              <Badge
+                colorScheme={getDateStatus(todo.dueDate) || 'gray'}
+                fontSize="sm"
+                px={2}
+                py={1}
+                borderRadius="md"
+              >
+                마감일: {formatDate(todo.dueDate)}
+              </Badge>
+            )}
+          </VStack>
+          <Box as="span" display="flex" alignItems="center">
+            <IconButton
+              aria-label="Delete todo"
+              icon={<DeleteIcon />}
+              onClick={handleDelete}
+              colorScheme="red"
+              variant="ghost"
+              size="lg"
+              padding={2}
+              _hover={{ bg: 'red.50' }}
+            />
+          </Box>
+        </HStack>
+      )}
+    </Draggable>
   );
 };
 
-function TodoList({ todos, onToggle, onDelete }: TodoListProps) {
-  const todoItems = useMemo(
-    () =>
-      todos.map((todo) => (
-        <TodoItem
-          key={todo.id}
-          todo={todo}
-          onToggle={onToggle}
-          onDelete={onDelete}
-        />
-      )),
-    [todos, onToggle, onDelete]
+function TodoList({ todos, onToggle, onDelete, onReorder }: TodoListProps) {
+  const handleDragEnd = useCallback(
+    (result: DropResult) => {
+      if (!result.destination) return;
+
+      const startIndex = result.source.index;
+      const endIndex = result.destination.index;
+
+      if (startIndex === endIndex) return;
+
+      onReorder(startIndex, endIndex);
+    },
+    [onReorder]
   );
 
   return (
-    <VStack spacing={4} width="100%" align="stretch">
-      {todoItems}
-    </VStack>
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <Droppable droppableId="todos">
+        {(provided) => (
+          <VStack
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            spacing={4}
+            width="100%"
+            align="stretch"
+          >
+            {todos.map((todo, index) => (
+              <TodoItem
+                key={todo.id}
+                todo={todo}
+                index={index}
+                onToggle={onToggle}
+                onDelete={onDelete}
+              />
+            ))}
+            {provided.placeholder}
+          </VStack>
+        )}
+      </Droppable>
+    </DragDropContext>
   );
 }
 
