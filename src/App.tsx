@@ -1,6 +1,7 @@
 import {
   Box,
   ChakraProvider,
+  ColorModeScript,
   Container,
   Heading,
   VStack,
@@ -8,6 +9,7 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import AddTodo from './components/AddTodo';
 import TodoList from './components/TodoList';
+import { theme } from './theme';
 import type { Todo } from './types';
 
 // 로컬 스토리지 키
@@ -82,8 +84,9 @@ function App() {
   );
 
   return (
-    <ChakraProvider>
-      <Box minH="100vh" bg="gray.50" py={8}>
+    <ChakraProvider theme={theme}>
+      <ColorModeScript initialColorMode={theme.config.initialColorMode} />
+      <Box minH="100vh" bg="gray.50" _dark={{ bg: 'gray.800' }} py={8}>
         <Container maxW="container.md">
           <VStack spacing={8}>
             <Heading>할 일 목록</Heading>

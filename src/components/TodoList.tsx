@@ -9,6 +9,7 @@ import {
   HStack,
   IconButton,
   Input,
+  keyframes,
   Modal,
   ModalBody,
   ModalCloseButton,
@@ -17,11 +18,13 @@ import {
   ModalHeader,
   ModalOverlay,
   Text,
+  Tooltip,
+  useColorMode,
   useDisclosure,
   useToast,
   VStack,
 } from '@chakra-ui/react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { DropResult } from 'react-beautiful-dnd';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import type { Todo } from '../types';
@@ -83,10 +86,91 @@ const TodoItem = ({
   ) => void;
 }) => {
   const toast = useToast();
+  const { colorMode, toggleColorMode } = useColorMode();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(todo.text);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [editDueDate, setEditDueDate] = useState<string | null>(todo.dueDate);
+  const [clickCount, setClickCount] = useState(0);
+  const [showSecret, setShowSecret] = useState(false);
+
+  // 이스터에그: Konami 코드 감지
+  useEffect(() => {
+    const konamiCode = [
+      'ArrowUp',
+      'ArrowUp',
+      'ArrowDown',
+      'ArrowDown',
+      'ArrowLeft',
+      'ArrowRight',
+      'ArrowLeft',
+      'ArrowRight',
+      'b',
+      'a',
+    ];
+    let konamiIndex = 0;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === konamiCode[konamiIndex]) {
+        konamiIndex++;
+        if (konamiIndex === konamiCode.length) {
+          toast({
+            title: '🎉 이스터에그 발견!',
+            description: 'Konami 코드를 입력하셨네요!',
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+          });
+          konamiIndex = 0;
+        }
+      } else {
+        konamiIndex = 0;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toast]);
+
+  // 이스터에그: 제목 더블클릭
+  const handleTitleClick = useCallback(() => {
+    setClickCount((prev) => {
+      const newCount = prev + 1;
+      if (newCount === 5) {
+        toast({
+          title: '🎨 테마 변경!',
+          description: '다크 모드가 토글되었습니다.',
+          status: 'info',
+          duration: 2000,
+          isClosable: true,
+        });
+        toggleColorMode();
+        return 0;
+      }
+      return newCount;
+    });
+  }, [toast, toggleColorMode]);
+
+  // 이스터에그: 특정 텍스트 입력 시 반응
+  const handleTextChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const text = e.target.value.toLowerCase();
+      if (text.includes('konami') || text.includes('코나미')) {
+        toast({
+          title: '🎮 게임 시작!',
+          description: 'Konami 코드를 입력해보세요! (↑↑↓↓←→←→BA)',
+          status: 'info',
+          duration: 3000,
+          isClosable: true,
+        });
+      } else if (text.includes('secret') || text.includes('비밀')) {
+        setShowSecret(true);
+        setTimeout(() => setShowSecret(false), 2000);
+      }
+      setEditText(e.target.value);
+    },
+    [toast]
+  );
 
   const handleDelete = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -186,7 +270,26 @@ const TodoItem = ({
               spacing={4}
               transition="all 0.2s"
               transform={snapshot.isDragging ? 'scale(1.02)' : 'none'}
+              position="relative"
             >
+              {showSecret && (
+                <Box
+                  position="absolute"
+                  top="-20px"
+                  left="50%"
+                  transform="translateX(-50%)"
+                  fontSize="sm"
+                  color="purple.500"
+                  fontWeight="bold"
+                  animation={`${keyframes({
+                    '0%': { transform: 'translateX(-50%) translateY(0)' },
+                    '50%': { transform: 'translateX(-50%) translateY(-10px)' },
+                    '100%': { transform: 'translateX(-50%) translateY(0)' },
+                  })} 1s infinite`}
+                >
+                  🎉 비밀을 발견하셨네요!
+                </Box>
+              )}
               <Box
                 {...provided.dragHandleProps}
                 p={2}
@@ -221,7 +324,7 @@ const TodoItem = ({
                   <>
                     <Input
                       value={editText}
-                      onChange={(e) => setEditText(e.target.value)}
+                      onChange={handleTextChange}
                       onKeyDown={handleKeyPress}
                       autoFocus
                       size="lg"
@@ -243,13 +346,20 @@ const TodoItem = ({
                   </>
                 ) : (
                   <>
-                    <Text
-                      textDecoration={todo.completed ? 'line-through' : 'none'}
-                      color={todo.completed ? 'gray.500' : 'black'}
-                      fontSize="lg"
-                    >
-                      {todo.text}
-                    </Text>
+                    <Tooltip label="제목을 5번 클릭하면 테마가 바뀝니다!">
+                      <Text
+                        textDecoration={
+                          todo.completed ? 'line-through' : 'none'
+                        }
+                        color={todo.completed ? 'gray.500' : 'black'}
+                        fontSize="lg"
+                        onClick={handleTitleClick}
+                        cursor="pointer"
+                        _hover={{ color: 'blue.500' }}
+                      >
+                        {todo.text}
+                      </Text>
+                    </Tooltip>
                     {todo.dueDate && (
                       <Badge
                         colorScheme={getDateStatus(todo.dueDate) || 'gray'}
