@@ -7,11 +7,12 @@ import type { Todo } from './types';
 function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
 
-  const addTodo = (text: string) => {
+  const addTodo = (text: string, dueDate: string | null) => {
     const newTodo: Todo = {
       id: Date.now(),
       text,
       completed: false,
+      dueDate,
     };
     setTodos([...todos, newTodo]);
   };
