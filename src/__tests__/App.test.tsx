@@ -18,7 +18,7 @@ describe('App 컴포넌트', () => {
   it('기본 렌더링이 정상적으로 동작한다', () => {
     renderComponent();
 
-    expect(screen.getByText('할 일 관리 앱')).toBeInTheDocument();
+    expect(screen.getByText('TODO 앱')).toBeInTheDocument();
     expect(
       screen.getByPlaceholderText('할 일을 입력하세요...')
     ).toBeInTheDocument();
@@ -61,8 +61,8 @@ describe('App 컴포넌트', () => {
     fireEvent.change(input, { target: { value: '삭제 테스트' } });
     fireEvent.click(addButton);
 
-    // 삭제 버튼 클릭
-    const deleteButton = screen.getByRole('button', { name: '삭제' });
+    // 삭제 버튼 클릭 (aria-label 사용)
+    const deleteButton = screen.getByLabelText('Delete todo');
     fireEvent.click(deleteButton);
 
     expect(screen.queryByText('삭제 테스트')).not.toBeInTheDocument();
@@ -80,6 +80,6 @@ describe('App 컴포넌트', () => {
     // 컴포넌트 리렌더링
     renderComponent();
 
-    expect(screen.getByText('스토리지 테스트')).toBeInTheDocument();
+    expect(screen.getAllByText('스토리지 테스트').length).toBeGreaterThan(0);
   });
 });

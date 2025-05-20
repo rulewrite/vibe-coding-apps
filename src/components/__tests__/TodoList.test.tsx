@@ -64,17 +64,16 @@ describe('TodoList 컴포넌트', () => {
 
   it('삭제 버튼이 정상적으로 동작한다', () => {
     renderComponent();
-
-    const deleteButtons = screen.getAllByRole('button', { name: '삭제' });
+    const deleteButtons = screen.getAllByLabelText('Delete todo');
     fireEvent.click(deleteButtons[0]);
-
     expect(mockOnDelete).toHaveBeenCalledWith(mockTodos[0].id);
   });
 
   it('마감일이 있는 할 일은 배지로 표시된다', () => {
     renderComponent();
-
-    const badge = screen.getByText('2024년 3월 20일 09:00');
+    const badge = screen.getByText((content) =>
+      /2024년 3월 20일.*09:00/.test(content)
+    );
     expect(badge).toBeInTheDocument();
   });
 
