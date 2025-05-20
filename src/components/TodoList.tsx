@@ -9,6 +9,7 @@ import {
   useToast,
   VStack,
 } from '@chakra-ui/react';
+import { useCallback, useMemo } from 'react';
 import type { Todo } from '../types';
 
 interface TodoListProps {
@@ -17,55 +18,61 @@ interface TodoListProps {
   onDelete: (id: number) => void;
 }
 
+const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: true,
+};
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
 function TodoList({ todos, onToggle, onDelete }: TodoListProps) {
   const toast = useToast();
 
-  const handleDelete = (e: React.MouseEvent<HTMLButtonElement>, id: number) => {
-    e.stopPropagation();
-    onDelete(id);
-    toast({
-      title: '할 일이 삭제되었습니다',
-      status: 'info',
-      duration: 2000,
-      isClosable: true,
-    });
-  };
+  const handleDelete = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>, id: number) => {
+      e.stopPropagation();
+      onDelete(id);
+      toast({
+        title: '할 일이 삭제되었습니다',
+        status: 'info',
+        duration: 2000,
+        isClosable: true,
+      });
+    },
+    [onDelete, toast]
+  );
 
-  const handleCheckboxChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    id: number
-  ) => {
-    e.stopPropagation();
-    onToggle(id);
-  };
+  const handleCheckboxChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>, id: number) => {
+      e.stopPropagation();
+      onToggle(id);
+    },
+    [onToggle]
+  );
 
-  const formatDate = (dateString: string | null) => {
+  const formatDate = useCallback((dateString: string | null) => {
     if (!dateString) return null;
     const date = new Date(dateString);
-    return date.toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
-  };
+    return date.toLocaleString('ko-KR', DATE_FORMAT_OPTIONS);
+  }, []);
 
-  const getDateStatus = (dateString: string | null) => {
+  const getDateStatus = useCallback((dateString: string | null) => {
     if (!dateString) return null;
     const now = new Date();
     const dueDate = new Date(dateString);
 
     if (dueDate < now) return 'red';
-    if (dueDate.getTime() - now.getTime() < 24 * 60 * 60 * 1000)
-      return 'orange'; // 24시간 이내
+    if (dueDate.getTime() - now.getTime() < ONE_DAY_MS) return 'orange';
     return 'green';
-  };
+  }, []);
 
-  return (
-    <VStack spacing={4} width="100%" align="stretch">
-      {todos.map((todo) => (
+  const todoItems = useMemo(
+    () =>
+      todos.map((todo) => (
         <HStack
           key={todo.id}
           p={4}
@@ -125,7 +132,13 @@ function TodoList({ todos, onToggle, onDelete }: TodoListProps) {
             />
           </Box>
         </HStack>
-      ))}
+      )),
+    [todos, handleCheckboxChange, handleDelete, formatDate, getDateStatus]
+  );
+
+  return (
+    <VStack spacing={4} width="100%" align="stretch">
+      {todoItems}
     </VStack>
   );
 }
