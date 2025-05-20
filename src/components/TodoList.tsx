@@ -34,6 +34,22 @@ const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 const TOAST_DURATION = 2000;
 
+const DragHandleIcon = () => (
+  <Box
+    width="20px"
+    height="20px"
+    display="flex"
+    flexDirection="column"
+    justifyContent="center"
+    alignItems="center"
+    gap="2px"
+  >
+    <Box width="100%" height="2px" bg="gray.400" borderRadius="full" />
+    <Box width="100%" height="2px" bg="gray.400" borderRadius="full" />
+    <Box width="100%" height="2px" bg="gray.400" borderRadius="full" />
+  </Box>
+);
+
 const TodoItem = ({
   todo,
   index,
@@ -87,31 +103,31 @@ const TodoItem = ({
 
   return (
     <Draggable draggableId={String(todo.id)} index={index}>
-      {(provided) => (
+      {(provided, snapshot) => (
         <div ref={provided.innerRef} {...provided.draggableProps}>
           <HStack
             p={4}
             bg="white"
             borderRadius="md"
-            boxShadow="sm"
+            boxShadow={snapshot.isDragging ? 'lg' : 'sm'}
             _hover={{ boxShadow: 'md' }}
             spacing={4}
             transition="all 0.2s"
+            transform={snapshot.isDragging ? 'scale(1.02)' : 'none'}
           >
-            <div {...provided.dragHandleProps}>
-              <Box
-                width="24px"
-                height="24px"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                color="gray.400"
-                cursor="grab"
-                _active={{ cursor: 'grabbing' }}
-              >
-                ⋮⋮
-              </Box>
-            </div>
+            <Box
+              {...provided.dragHandleProps}
+              p={2}
+              borderRadius="md"
+              cursor="grab"
+              _hover={{ bg: 'gray.50' }}
+              _active={{ cursor: 'grabbing', bg: 'gray.100' }}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+            >
+              <DragHandleIcon />
+            </Box>
             <Box
               as="span"
               display="flex"
