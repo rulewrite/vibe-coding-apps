@@ -10,40 +10,74 @@ import {
   useToast,
   VStack,
 } from '@chakra-ui/react';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 interface AddTodoProps {
   onAdd: (text: string, dueDate: string | null) => void;
 }
+
+const DEFAULT_HOURS = 9;
+const DEFAULT_MINUTES = 0;
+const DEFAULT_SECONDS = 0;
+const DEFAULT_MILLISECONDS = 0;
 
 function AddTodo({ onAdd }: AddTodoProps) {
   const [text, setText] = useState('');
   const [dueDate, setDueDate] = useState(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 0, 0, 0);
+    tomorrow.setHours(
+      DEFAULT_HOURS,
+      DEFAULT_MINUTES,
+      DEFAULT_SECONDS,
+      DEFAULT_MILLISECONDS
+    );
     return tomorrow.toISOString().split('.')[0].slice(0, 16);
   });
   const toast = useToast();
 
-  const setQuickDate = useCallback((days: number) => {
-    const date = new Date();
-    date.setDate(date.getDate() + days);
-    date.setHours(9, 0, 0, 0);
-    setDueDate(date.toISOString().split('.')[0].slice(0, 16));
+  const getTomorrowDate = useCallback(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(
+      DEFAULT_HOURS,
+      DEFAULT_MINUTES,
+      DEFAULT_SECONDS,
+      DEFAULT_MILLISECONDS
+    );
+    return tomorrow;
   }, []);
+
+  const formatDateToString = useCallback((date: Date) => {
+    return date.toISOString().split('.')[0].slice(0, 16);
+  }, []);
+
+  const setQuickDate = useCallback(
+    (days: number) => {
+      const date = new Date();
+      date.setDate(date.getDate() + days);
+      date.setHours(
+        DEFAULT_HOURS,
+        DEFAULT_MINUTES,
+        DEFAULT_SECONDS,
+        DEFAULT_MILLISECONDS
+      );
+      setDueDate(formatDateToString(date));
+    },
+    [formatDateToString]
+  );
 
   const handleTextChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setText(e.target.value);
+      setText(e.target.value.trim());
     },
     []
   );
 
   const handleDateChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const [date] = dueDate.split('T');
-      setDueDate(`${e.target.value}T${date.split('T')[1]}`);
+      const [, time] = dueDate.split('T');
+      setDueDate(`${e.target.value}T${time}`);
     },
     [dueDate]
   );
@@ -58,16 +92,15 @@ function AddTodo({ onAdd }: AddTodoProps) {
 
   const resetForm = useCallback(() => {
     setText('');
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 0, 0, 0);
-    setDueDate(tomorrow.toISOString().split('.')[0].slice(0, 16));
-  }, []);
+    setDueDate(formatDateToString(getTomorrowDate()));
+  }, [formatDateToString, getTomorrowDate]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      if (!text.trim()) {
+      const trimmedText = text.trim();
+
+      if (!trimmedText) {
         toast({
           title: '할 일을 입력해주세요',
           status: 'warning',
@@ -77,10 +110,25 @@ function AddTodo({ onAdd }: AddTodoProps) {
         return;
       }
 
-      onAdd(text, dueDate);
+      onAdd(trimmedText, dueDate);
       resetForm();
     },
     [text, dueDate, onAdd, toast, resetForm]
+  );
+
+  const minDate = useMemo(() => {
+    return new Date().toISOString().split('T')[0];
+  }, []);
+
+  const quickDateButtons = useMemo(
+    () => [
+      { days: 1, label: '내일' },
+      { days: 3, label: '3일 후' },
+      { days: 7, label: '1주일' },
+      { days: 14, label: '2주일' },
+      { days: 30, label: '1개월' },
+    ],
+    []
   );
 
   return (
@@ -99,51 +147,17 @@ function AddTodo({ onAdd }: AddTodoProps) {
           <FormLabel>마감일</FormLabel>
           <VStack spacing={2} align="stretch">
             <ButtonGroup size="sm" isAttached variant="outline" spacing={1}>
-              <Tooltip label="내일 오전 9시">
-                <Button
-                  onClick={() => setQuickDate(1)}
-                  colorScheme="blue"
-                  variant="outline"
-                >
-                  내일
-                </Button>
-              </Tooltip>
-              <Tooltip label="3일 후 오전 9시">
-                <Button
-                  onClick={() => setQuickDate(3)}
-                  colorScheme="blue"
-                  variant="outline"
-                >
-                  3일 후
-                </Button>
-              </Tooltip>
-              <Tooltip label="일주일 후 오전 9시">
-                <Button
-                  onClick={() => setQuickDate(7)}
-                  colorScheme="blue"
-                  variant="outline"
-                >
-                  1주일
-                </Button>
-              </Tooltip>
-              <Tooltip label="2주일 후 오전 9시">
-                <Button
-                  onClick={() => setQuickDate(14)}
-                  colorScheme="blue"
-                  variant="outline"
-                >
-                  2주일
-                </Button>
-              </Tooltip>
-              <Tooltip label="한 달 후 오전 9시">
-                <Button
-                  onClick={() => setQuickDate(30)}
-                  colorScheme="blue"
-                  variant="outline"
-                >
-                  1개월
-                </Button>
-              </Tooltip>
+              {quickDateButtons.map(({ days, label }) => (
+                <Tooltip key={days} label={`${label} 오전 ${DEFAULT_HOURS}시`}>
+                  <Button
+                    onClick={() => setQuickDate(days)}
+                    colorScheme="blue"
+                    variant="outline"
+                  >
+                    {label}
+                  </Button>
+                </Tooltip>
+              ))}
             </ButtonGroup>
             <Grid templateColumns="repeat(2, 1fr)" gap={4}>
               <GridItem>
@@ -152,7 +166,7 @@ function AddTodo({ onAdd }: AddTodoProps) {
                   value={dueDate.split('T')[0]}
                   onChange={handleDateChange}
                   size="lg"
-                  min={new Date().toISOString().split('T')[0]}
+                  min={minDate}
                 />
               </GridItem>
               <GridItem>
