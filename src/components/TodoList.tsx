@@ -1,15 +1,16 @@
-import { DeleteIcon } from '@chakra-ui/icons';
+import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
 import {
   Badge,
   Box,
   Checkbox,
   HStack,
   IconButton,
+  Input,
   Text,
   useToast,
   VStack,
 } from '@chakra-ui/react';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import type { DropResult } from 'react-beautiful-dnd';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import type { Todo } from '../types';
@@ -19,6 +20,7 @@ interface TodoListProps {
   onToggle: (id: number) => void;
   onDelete: (id: number) => void;
   onReorder: (startIndex: number, endIndex: number) => void;
+  onUpdate: (id: number, newText: string) => void;
 }
 
 const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
@@ -55,13 +57,17 @@ const TodoItem = ({
   index,
   onToggle,
   onDelete,
+  onUpdate,
 }: {
   todo: Todo;
   index: number;
   onToggle: (id: number) => void;
   onDelete: (id: number) => void;
+  onUpdate: (id: number, newText: string) => void;
 }) => {
   const toast = useToast();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(todo.text);
 
   const handleDelete = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -75,6 +81,44 @@ const TodoItem = ({
       });
     },
     [onDelete, todo.id, toast]
+  );
+
+  const handleEdit = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    setIsEditing(true);
+  }, []);
+
+  const handleUpdate = useCallback(() => {
+    if (editText.trim() === '') {
+      toast({
+        title: '할 일 내용을 입력해주세요',
+        status: 'warning',
+        duration: TOAST_DURATION,
+        isClosable: true,
+      });
+      return;
+    }
+
+    onUpdate(todo.id, editText.trim());
+    setIsEditing(false);
+    toast({
+      title: '할 일이 수정되었습니다',
+      status: 'success',
+      duration: TOAST_DURATION,
+      isClosable: true,
+    });
+  }, [editText, onUpdate, todo.id, toast]);
+
+  const handleKeyPress = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        handleUpdate();
+      } else if (e.key === 'Escape') {
+        setIsEditing(false);
+        setEditText(todo.text);
+      }
+    },
+    [handleUpdate, todo.text]
   );
 
   const handleCheckboxChange = useCallback(
@@ -145,13 +189,27 @@ const TodoItem = ({
               />
             </Box>
             <VStack flex={1} align="start" spacing={1}>
-              <Text
-                textDecoration={todo.completed ? 'line-through' : 'none'}
-                color={todo.completed ? 'gray.500' : 'black'}
-                fontSize="lg"
-              >
-                {todo.text}
-              </Text>
+              {isEditing ? (
+                <Input
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  onBlur={handleUpdate}
+                  onKeyDown={handleKeyPress}
+                  autoFocus
+                  size="lg"
+                  variant="filled"
+                  _hover={{ bg: 'gray.100' }}
+                  _focus={{ bg: 'white', borderColor: 'blue.500' }}
+                />
+              ) : (
+                <Text
+                  textDecoration={todo.completed ? 'line-through' : 'none'}
+                  color={todo.completed ? 'gray.500' : 'black'}
+                  fontSize="lg"
+                >
+                  {todo.text}
+                </Text>
+              )}
               {todo.dueDate && (
                 <Badge
                   colorScheme={getDateStatus(todo.dueDate) || 'gray'}
@@ -164,7 +222,18 @@ const TodoItem = ({
                 </Badge>
               )}
             </VStack>
-            <Box as="span" display="flex" alignItems="center">
+            <HStack spacing={2}>
+              <IconButton
+                aria-label="Edit todo"
+                icon={<EditIcon />}
+                onClick={handleEdit}
+                colorScheme="blue"
+                variant="ghost"
+                size="lg"
+                padding={2}
+                _hover={{ bg: 'blue.50' }}
+                display={isEditing ? 'none' : 'flex'}
+              />
               <IconButton
                 aria-label="Delete todo"
                 icon={<DeleteIcon />}
@@ -174,8 +243,9 @@ const TodoItem = ({
                 size="lg"
                 padding={2}
                 _hover={{ bg: 'red.50' }}
+                display={isEditing ? 'none' : 'flex'}
               />
-            </Box>
+            </HStack>
           </HStack>
         </div>
       )}
@@ -183,7 +253,13 @@ const TodoItem = ({
   );
 };
 
-function TodoList({ todos, onToggle, onDelete, onReorder }: TodoListProps) {
+function TodoList({
+  todos,
+  onToggle,
+  onDelete,
+  onReorder,
+  onUpdate,
+}: TodoListProps) {
   const handleDragEnd = useCallback(
     (result: DropResult) => {
       if (!result.destination) return;
@@ -216,6 +292,7 @@ function TodoList({ todos, onToggle, onDelete, onReorder }: TodoListProps) {
                     index={index}
                     onToggle={onToggle}
                     onDelete={onDelete}
+                    onUpdate={onUpdate}
                   />
                 ))}
                 {provided.placeholder}

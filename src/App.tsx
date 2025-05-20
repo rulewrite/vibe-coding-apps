@@ -1,4 +1,10 @@
-import { ChakraProvider, Container, Heading, VStack } from '@chakra-ui/react';
+import {
+  Box,
+  ChakraProvider,
+  Container,
+  Heading,
+  VStack,
+} from '@chakra-ui/react';
 import { useCallback, useEffect, useState } from 'react';
 import AddTodo from './components/AddTodo';
 import TodoList from './components/TodoList';
@@ -62,20 +68,33 @@ function App() {
     });
   }, []);
 
+  const updateTodo = useCallback((id: number, newText: string) => {
+    setTodos((prevTodos) => {
+      const updatedTodos = prevTodos.map((todo) =>
+        todo.id === id ? { ...todo, text: newText } : todo
+      );
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedTodos));
+      return updatedTodos;
+    });
+  }, []);
+
   return (
     <ChakraProvider>
-      <Container maxW="container.md" py={10}>
-        <VStack spacing={8}>
-          <Heading>TODO 앱</Heading>
-          <AddTodo onAdd={addTodo} />
-          <TodoList
-            todos={todos}
-            onToggle={toggleTodo}
-            onDelete={deleteTodo}
-            onReorder={reorderTodos}
-          />
-        </VStack>
-      </Container>
+      <Box minH="100vh" bg="gray.50" py={8}>
+        <Container maxW="container.md">
+          <VStack spacing={8}>
+            <Heading>할 일 목록</Heading>
+            <AddTodo onAdd={addTodo} />
+            <TodoList
+              todos={todos}
+              onToggle={toggleTodo}
+              onDelete={deleteTodo}
+              onReorder={reorderTodos}
+              onUpdate={updateTodo}
+            />
+          </VStack>
+        </Container>
+      </Box>
     </ChakraProvider>
   );
 }
