@@ -29,29 +29,39 @@ const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
-function TodoList({ todos, onToggle, onDelete }: TodoListProps) {
+const TOAST_DURATION = 2000;
+
+const TodoItem = ({
+  todo,
+  onToggle,
+  onDelete,
+}: {
+  todo: Todo;
+  onToggle: (id: number) => void;
+  onDelete: (id: number) => void;
+}) => {
   const toast = useToast();
 
   const handleDelete = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>, id: number) => {
+    (e: React.MouseEvent<HTMLButtonElement>) => {
       e.stopPropagation();
-      onDelete(id);
+      onDelete(todo.id);
       toast({
         title: '할 일이 삭제되었습니다',
         status: 'info',
-        duration: 2000,
+        duration: TOAST_DURATION,
         isClosable: true,
       });
     },
-    [onDelete, toast]
+    [onDelete, todo.id, toast]
   );
 
   const handleCheckboxChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>, id: number) => {
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       e.stopPropagation();
-      onToggle(id);
+      onToggle(todo.id);
     },
-    [onToggle]
+    [onToggle, todo.id]
   );
 
   const formatDate = useCallback((dateString: string | null) => {
@@ -70,70 +80,90 @@ function TodoList({ todos, onToggle, onDelete }: TodoListProps) {
     return 'green';
   }, []);
 
+  const formattedDate = useMemo(
+    () => (todo.dueDate ? formatDate(todo.dueDate) : null),
+    [todo.dueDate, formatDate]
+  );
+
+  const dateStatus = useMemo(
+    () => (todo.dueDate ? getDateStatus(todo.dueDate) : null),
+    [todo.dueDate, getDateStatus]
+  );
+
+  return (
+    <HStack
+      p={4}
+      bg="white"
+      borderRadius="md"
+      boxShadow="sm"
+      _hover={{ boxShadow: 'md' }}
+      spacing={4}
+      transition="all 0.2s"
+    >
+      <Box
+        as="span"
+        display="flex"
+        alignItems="center"
+        cursor="pointer"
+        p={2}
+        borderRadius="md"
+      >
+        <Checkbox
+          isChecked={todo.completed}
+          onChange={handleCheckboxChange}
+          colorScheme="blue"
+          size="lg"
+          padding={2}
+        />
+      </Box>
+      <VStack flex={1} align="start" spacing={1}>
+        <Text
+          textDecoration={todo.completed ? 'line-through' : 'none'}
+          color={todo.completed ? 'gray.500' : 'black'}
+          fontSize="lg"
+        >
+          {todo.text}
+        </Text>
+        {formattedDate && (
+          <Badge
+            colorScheme={dateStatus || 'gray'}
+            fontSize="sm"
+            px={2}
+            py={1}
+            borderRadius="md"
+          >
+            마감일: {formattedDate}
+          </Badge>
+        )}
+      </VStack>
+      <Box as="span" display="flex" alignItems="center">
+        <IconButton
+          aria-label="Delete todo"
+          icon={<DeleteIcon />}
+          onClick={handleDelete}
+          colorScheme="red"
+          variant="ghost"
+          size="lg"
+          padding={2}
+          _hover={{ bg: 'red.50' }}
+        />
+      </Box>
+    </HStack>
+  );
+};
+
+function TodoList({ todos, onToggle, onDelete }: TodoListProps) {
   const todoItems = useMemo(
     () =>
       todos.map((todo) => (
-        <HStack
+        <TodoItem
           key={todo.id}
-          p={4}
-          bg="white"
-          borderRadius="md"
-          boxShadow="sm"
-          _hover={{ boxShadow: 'md' }}
-          spacing={4}
-          transition="all 0.2s"
-        >
-          <Box
-            as="span"
-            display="flex"
-            alignItems="center"
-            cursor="pointer"
-            p={2}
-            borderRadius="md"
-          >
-            <Checkbox
-              isChecked={todo.completed}
-              onChange={(e) => handleCheckboxChange(e, todo.id)}
-              colorScheme="blue"
-              size="lg"
-              padding={2}
-            />
-          </Box>
-          <VStack flex={1} align="start" spacing={1}>
-            <Text
-              textDecoration={todo.completed ? 'line-through' : 'none'}
-              color={todo.completed ? 'gray.500' : 'black'}
-              fontSize="lg"
-            >
-              {todo.text}
-            </Text>
-            {todo.dueDate && (
-              <Badge
-                colorScheme={getDateStatus(todo.dueDate) || 'gray'}
-                fontSize="sm"
-                px={2}
-                py={1}
-                borderRadius="md"
-              >
-                마감일: {formatDate(todo.dueDate)}
-              </Badge>
-            )}
-          </VStack>
-          <Box as="span" display="flex" alignItems="center">
-            <IconButton
-              aria-label="Delete todo"
-              icon={<DeleteIcon />}
-              onClick={(e) => handleDelete(e, todo.id)}
-              colorScheme="red"
-              variant="ghost"
-              size="lg"
-              padding={2}
-              _hover={{ bg: 'red.50' }}
-            />
-          </Box>
-        </HStack>
+          todo={todo}
+          onToggle={onToggle}
+          onDelete={onDelete}
+        />
       )),
-    [todos, handleCheckboxChange, handleDelete, formatDate, getDateStatus]
+    [todos, onToggle, onDelete]
   );
 
   return (
