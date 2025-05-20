@@ -14,7 +14,11 @@ interface AddTodoProps {
 
 function AddTodo({ onAdd }: AddTodoProps) {
   const [text, setText] = useState('');
-  const [dueDate, setDueDate] = useState('');
+  const [dueDate, setDueDate] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split('T')[0];
+  });
   const toast = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -35,7 +39,10 @@ function AddTodo({ onAdd }: AddTodoProps) {
       : null;
     onAdd(text, formattedDate);
     setText('');
-    setDueDate('');
+    // 입력 후 다시 내일 날짜로 초기화
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    setDueDate(tomorrow.toISOString().split('T')[0]);
   };
 
   return (
@@ -57,6 +64,7 @@ function AddTodo({ onAdd }: AddTodoProps) {
             value={dueDate}
             onChange={(e) => setDueDate(e.target.value)}
             size="lg"
+            min={new Date().toISOString().split('T')[0]}
           />
         </FormControl>
         <Button type="submit" colorScheme="blue" size="lg">
