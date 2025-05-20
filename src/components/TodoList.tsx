@@ -183,26 +183,32 @@ function TodoList({ todos, onToggle, onDelete, onReorder }: TodoListProps) {
   );
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <Droppable droppableId="todos">
-        {(provided) => (
-          <div ref={provided.innerRef} {...provided.droppableProps}>
-            <VStack spacing={4} width="100%" align="stretch">
-              {todos.map((todo, index) => (
-                <TodoItem
-                  key={todo.id}
-                  todo={todo}
-                  index={index}
-                  onToggle={onToggle}
-                  onDelete={onDelete}
-                />
-              ))}
-              {provided.placeholder}
-            </VStack>
-          </div>
-        )}
-      </Droppable>
-    </DragDropContext>
+    <Box width="100%">
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="todo-list">
+          {(provided) => (
+            <Box
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              width="100%"
+            >
+              <VStack spacing={4} width="100%" align="stretch">
+                {todos.map((todo, index) => (
+                  <TodoItem
+                    key={todo.id}
+                    todo={todo}
+                    index={index}
+                    onToggle={onToggle}
+                    onDelete={onDelete}
+                  />
+                ))}
+                {provided.placeholder}
+              </VStack>
+            </Box>
+          )}
+        </Droppable>
+      </DragDropContext>
+    </Box>
   );
 }
 
