@@ -104,7 +104,14 @@ const TodoItem = ({
   return (
     <Draggable draggableId={String(todo.id)} index={index}>
       {(provided, snapshot) => (
-        <div ref={provided.innerRef} {...provided.draggableProps}>
+        <div
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          style={{
+            ...provided.draggableProps.style,
+            transition: snapshot.isDragging ? 'none' : 'all 0.2s ease',
+          }}
+        >
           <HStack
             p={4}
             bg="white"
@@ -112,8 +119,9 @@ const TodoItem = ({
             boxShadow={snapshot.isDragging ? 'lg' : 'sm'}
             _hover={{ boxShadow: 'md' }}
             spacing={4}
-            transition="all 0.2s"
+            transition="all 0.2s ease"
             transform={snapshot.isDragging ? 'scale(1.02)' : 'none'}
+            willChange="transform"
           >
             <Box
               {...provided.dragHandleProps}
@@ -125,6 +133,7 @@ const TodoItem = ({
               display="flex"
               alignItems="center"
               justifyContent="center"
+              transition="background-color 0.2s ease"
             >
               <DragHandleIcon />
             </Box>
@@ -174,6 +183,7 @@ const TodoItem = ({
                 size="lg"
                 padding={2}
                 _hover={{ bg: 'red.50' }}
+                transition="background-color 0.2s ease"
               />
             </Box>
           </HStack>
@@ -193,7 +203,10 @@ function TodoList({ todos, onToggle, onDelete, onReorder }: TodoListProps) {
 
       if (startIndex === endIndex) return;
 
-      onReorder(startIndex, endIndex);
+      // 애니메이션이 완료된 후에 순서 변경
+      requestAnimationFrame(() => {
+        onReorder(startIndex, endIndex);
+      });
     },
     [onReorder]
   );
@@ -207,6 +220,7 @@ function TodoList({ todos, onToggle, onDelete, onReorder }: TodoListProps) {
               ref={provided.innerRef}
               {...provided.droppableProps}
               width="100%"
+              transition="all 0.2s ease"
             >
               <VStack spacing={4} width="100%" align="stretch">
                 {todos.map((todo, index) => (
