@@ -2,6 +2,8 @@ import {
   Button,
   FormControl,
   FormLabel,
+  Grid,
+  GridItem,
   Input,
   useToast,
   VStack,
@@ -17,7 +19,8 @@ function AddTodo({ onAdd }: AddTodoProps) {
   const [dueDate, setDueDate] = useState(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
+    tomorrow.setHours(9, 0, 0, 0);
+    return tomorrow.toISOString().split('.')[0].slice(0, 16);
   });
   const toast = useToast();
 
@@ -33,16 +36,12 @@ function AddTodo({ onAdd }: AddTodoProps) {
       return;
     }
 
-    // 날짜가 입력되지 않은 경우 null로 설정
-    const formattedDate = dueDate
-      ? new Date(dueDate).toISOString().split('T')[0]
-      : null;
-    onAdd(text, formattedDate);
+    onAdd(text, dueDate);
     setText('');
-    // 입력 후 다시 내일 날짜로 초기화
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    setDueDate(tomorrow.toISOString().split('T')[0]);
+    tomorrow.setHours(9, 0, 0, 0);
+    setDueDate(tomorrow.toISOString().split('.')[0].slice(0, 16));
   };
 
   return (
@@ -59,13 +58,31 @@ function AddTodo({ onAdd }: AddTodoProps) {
         </FormControl>
         <FormControl>
           <FormLabel>마감일</FormLabel>
-          <Input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            size="lg"
-            min={new Date().toISOString().split('T')[0]}
-          />
+          <Grid templateColumns="repeat(2, 1fr)" gap={4}>
+            <GridItem>
+              <Input
+                type="date"
+                value={dueDate.split('T')[0]}
+                onChange={(e) => {
+                  const [date] = dueDate.split('T');
+                  setDueDate(`${e.target.value}T${date.split('T')[1]}`);
+                }}
+                size="lg"
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </GridItem>
+            <GridItem>
+              <Input
+                type="time"
+                value={dueDate.split('T')[1]}
+                onChange={(e) => {
+                  const [date] = dueDate.split('T');
+                  setDueDate(`${date}T${e.target.value}`);
+                }}
+                size="lg"
+              />
+            </GridItem>
+          </Grid>
         </FormControl>
         <Button type="submit" colorScheme="blue" size="lg">
           추가

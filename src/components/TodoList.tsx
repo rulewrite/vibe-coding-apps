@@ -42,22 +42,24 @@ function TodoList({ todos, onToggle, onDelete }: TodoListProps) {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return null;
     const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', {
+    return date.toLocaleString('ko-KR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
     });
   };
 
   const getDateStatus = (dateString: string | null) => {
     if (!dateString) return null;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
     const dueDate = new Date(dateString);
-    dueDate.setHours(0, 0, 0, 0);
 
-    if (dueDate < today) return 'red';
-    if (dueDate.getTime() === today.getTime()) return 'orange';
+    if (dueDate < now) return 'red';
+    if (dueDate.getTime() - now.getTime() < 24 * 60 * 60 * 1000)
+      return 'orange'; // 24시간 이내
     return 'green';
   };
 
