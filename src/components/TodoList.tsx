@@ -86,92 +86,82 @@ const TodoItem = ({
   }, []);
 
   return (
-    <Draggable draggableId={todo.id.toString()} index={index}>
-      {(provided, snapshot) => (
-        <HStack
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          p={4}
-          bg="white"
-          borderRadius="md"
-          boxShadow={snapshot.isDragging ? 'lg' : 'sm'}
-          _hover={{ boxShadow: 'md' }}
-          spacing={4}
-          transition="all 0.2s"
-          transform={snapshot.isDragging ? 'scale(1.02)' : 'none'}
-          position="relative"
-        >
-          <Box
-            {...provided.dragHandleProps}
-            as="span"
-            display="flex"
-            alignItems="center"
-            cursor="grab"
-            p={2}
+    <Draggable draggableId={String(todo.id)} index={index}>
+      {(provided) => (
+        <div ref={provided.innerRef} {...provided.draggableProps}>
+          <HStack
+            p={4}
+            bg="white"
             borderRadius="md"
-            _hover={{ bg: 'gray.50' }}
-            _active={{ cursor: 'grabbing' }}
+            boxShadow="sm"
+            _hover={{ boxShadow: 'md' }}
+            spacing={4}
+            transition="all 0.2s"
           >
+            <div {...provided.dragHandleProps}>
+              <Box
+                width="24px"
+                height="24px"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                color="gray.400"
+                cursor="grab"
+                _active={{ cursor: 'grabbing' }}
+              >
+                ⋮⋮
+              </Box>
+            </div>
             <Box
-              width="24px"
-              height="24px"
+              as="span"
               display="flex"
               alignItems="center"
-              justifyContent="center"
-              color="gray.400"
+              cursor="pointer"
+              p={2}
+              borderRadius="md"
             >
-              ⋮⋮
+              <Checkbox
+                isChecked={todo.completed}
+                onChange={handleCheckboxChange}
+                colorScheme="blue"
+                size="lg"
+                padding={2}
+              />
             </Box>
-          </Box>
-          <Box
-            as="span"
-            display="flex"
-            alignItems="center"
-            cursor="pointer"
-            p={2}
-            borderRadius="md"
-          >
-            <Checkbox
-              isChecked={todo.completed}
-              onChange={handleCheckboxChange}
-              colorScheme="blue"
-              size="lg"
-              padding={2}
-            />
-          </Box>
-          <VStack flex={1} align="start" spacing={1}>
-            <Text
-              textDecoration={todo.completed ? 'line-through' : 'none'}
-              color={todo.completed ? 'gray.500' : 'black'}
-              fontSize="lg"
-            >
-              {todo.text}
-            </Text>
-            {todo.dueDate && (
-              <Badge
-                colorScheme={getDateStatus(todo.dueDate) || 'gray'}
-                fontSize="sm"
-                px={2}
-                py={1}
-                borderRadius="md"
+            <VStack flex={1} align="start" spacing={1}>
+              <Text
+                textDecoration={todo.completed ? 'line-through' : 'none'}
+                color={todo.completed ? 'gray.500' : 'black'}
+                fontSize="lg"
               >
-                마감일: {formatDate(todo.dueDate)}
-              </Badge>
-            )}
-          </VStack>
-          <Box as="span" display="flex" alignItems="center">
-            <IconButton
-              aria-label="Delete todo"
-              icon={<DeleteIcon />}
-              onClick={handleDelete}
-              colorScheme="red"
-              variant="ghost"
-              size="lg"
-              padding={2}
-              _hover={{ bg: 'red.50' }}
-            />
-          </Box>
-        </HStack>
+                {todo.text}
+              </Text>
+              {todo.dueDate && (
+                <Badge
+                  colorScheme={getDateStatus(todo.dueDate) || 'gray'}
+                  fontSize="sm"
+                  px={2}
+                  py={1}
+                  borderRadius="md"
+                >
+                  마감일: {formatDate(todo.dueDate)}
+                </Badge>
+              )}
+            </VStack>
+            <Box as="span" display="flex" alignItems="center">
+              <IconButton
+                aria-label="Delete todo"
+                icon={<DeleteIcon />}
+                onClick={handleDelete}
+                colorScheme="red"
+                variant="ghost"
+                size="lg"
+                padding={2}
+                _hover={{ bg: 'red.50' }}
+              />
+            </Box>
+          </HStack>
+        </div>
       )}
     </Draggable>
   );
@@ -196,24 +186,20 @@ function TodoList({ todos, onToggle, onDelete, onReorder }: TodoListProps) {
     <DragDropContext onDragEnd={handleDragEnd}>
       <Droppable droppableId="todos">
         {(provided) => (
-          <VStack
-            ref={provided.innerRef}
-            {...provided.droppableProps}
-            spacing={4}
-            width="100%"
-            align="stretch"
-          >
-            {todos.map((todo, index) => (
-              <TodoItem
-                key={todo.id}
-                todo={todo}
-                index={index}
-                onToggle={onToggle}
-                onDelete={onDelete}
-              />
-            ))}
-            {provided.placeholder}
-          </VStack>
+          <div ref={provided.innerRef} {...provided.droppableProps}>
+            <VStack spacing={4} width="100%" align="stretch">
+              {todos.map((todo, index) => (
+                <TodoItem
+                  key={todo.id}
+                  todo={todo}
+                  index={index}
+                  onToggle={onToggle}
+                  onDelete={onDelete}
+                />
+              ))}
+              {provided.placeholder}
+            </VStack>
+          </div>
         )}
       </Droppable>
     </DragDropContext>
