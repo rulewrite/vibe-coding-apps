@@ -86,15 +86,14 @@ const TodoItem = ({
   ) => void;
 }) => {
   const toast = useToast();
-  const { colorMode, toggleColorMode } = useColorMode();
+  const { toggleColorMode } = useColorMode();
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(todo.text);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen, onClose } = useDisclosure();
   const [editDueDate, setEditDueDate] = useState<string | null>(todo.dueDate);
-  const [clickCount, setClickCount] = useState(0);
   const [showSecret, setShowSecret] = useState(false);
 
-  // 비밀 메시지 이스터에그 감지
+  // 비밀 메시지와 Konami 코드 힌트 이스터에그 감지
   useEffect(() => {
     const text = todo.text.toLowerCase();
     if (text.includes('secret') || text.includes('비밀')) {
@@ -102,7 +101,16 @@ const TodoItem = ({
       const timer = setTimeout(() => setShowSecret(false), 2000);
       return () => clearTimeout(timer);
     }
-  }, [todo.text]);
+    if (text.includes('konami') || text.includes('코나미')) {
+      toast({
+        title: '🎮 게임 시작!',
+        description: 'Konami 코드를 입력해보세요! (↑↑↓↓←→←→BA)',
+        status: 'info',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  }, [todo.text, toast]);
 
   // 이스터에그: Konami 코드 감지
   useEffect(() => {
@@ -163,19 +171,9 @@ const TodoItem = ({
 
   const handleTextChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const text = e.target.value.toLowerCase();
-      if (text.includes('konami') || text.includes('코나미')) {
-        toast({
-          title: '🎮 게임 시작!',
-          description: 'Konami 코드를 입력해보세요! (↑↑↓↓←→←→BA)',
-          status: 'info',
-          duration: 3000,
-          isClosable: true,
-        });
-      }
       setEditText(e.target.value);
     },
-    [toast]
+    []
   );
 
   const handleDelete = useCallback(
