@@ -20,8 +20,8 @@ interface TodoListProps {
 function TodoList({ todos, onToggle, onDelete }: TodoListProps) {
   const toast = useToast();
 
-  const handleDelete = (e: React.MouseEvent, id: number) => {
-    e.stopPropagation(); // 이벤트 버블링 방지
+  const handleDelete = (e: React.MouseEvent<HTMLButtonElement>, id: number) => {
+    e.stopPropagation();
     onDelete(id);
     toast({
       title: '할 일이 삭제되었습니다',
@@ -29,6 +29,14 @@ function TodoList({ todos, onToggle, onDelete }: TodoListProps) {
       duration: 2000,
       isClosable: true,
     });
+  };
+
+  const handleCheckboxChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    id: number
+  ) => {
+    e.stopPropagation();
+    onToggle(id);
   };
 
   const formatDate = (dateString: string | null) => {
@@ -71,14 +79,12 @@ function TodoList({ todos, onToggle, onDelete }: TodoListProps) {
             display="flex"
             alignItems="center"
             cursor="pointer"
-            onClick={() => onToggle(todo.id)}
-            _hover={{ bg: 'gray.50' }}
             p={2}
             borderRadius="md"
           >
             <Checkbox
               isChecked={todo.completed}
-              onChange={() => onToggle(todo.id)}
+              onChange={(e) => handleCheckboxChange(e, todo.id)}
               colorScheme="blue"
               size="lg"
               padding={2}
