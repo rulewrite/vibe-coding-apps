@@ -104,14 +104,7 @@ const TodoItem = ({
   return (
     <Draggable draggableId={String(todo.id)} index={index}>
       {(provided, snapshot) => (
-        <div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          style={{
-            ...provided.draggableProps.style,
-            transition: snapshot.isDragging ? 'none' : 'all 0.2s ease',
-          }}
-        >
+        <div ref={provided.innerRef} {...provided.draggableProps}>
           <HStack
             p={4}
             bg="white"
@@ -119,9 +112,8 @@ const TodoItem = ({
             boxShadow={snapshot.isDragging ? 'lg' : 'sm'}
             _hover={{ boxShadow: 'md' }}
             spacing={4}
-            transition="all 0.2s ease"
+            transition="all 0.2s"
             transform={snapshot.isDragging ? 'scale(1.02)' : 'none'}
-            willChange="transform"
           >
             <Box
               {...provided.dragHandleProps}
@@ -133,7 +125,6 @@ const TodoItem = ({
               display="flex"
               alignItems="center"
               justifyContent="center"
-              transition="background-color 0.2s ease"
             >
               <DragHandleIcon />
             </Box>
@@ -183,7 +174,6 @@ const TodoItem = ({
                 size="lg"
                 padding={2}
                 _hover={{ bg: 'red.50' }}
-                transition="background-color 0.2s ease"
               />
             </Box>
           </HStack>
@@ -203,7 +193,6 @@ function TodoList({ todos, onToggle, onDelete, onReorder }: TodoListProps) {
 
       if (startIndex === endIndex) return;
 
-      // 즉시 순서 변경 적용
       onReorder(startIndex, endIndex);
     },
     [onReorder]
