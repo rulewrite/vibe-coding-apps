@@ -1,4 +1,4 @@
-import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
+import { CheckIcon, CloseIcon, DeleteIcon, EditIcon } from '@chakra-ui/icons';
 import {
   Badge,
   Box,
@@ -118,7 +118,10 @@ const TodoItem = ({
       return;
     }
 
-    onUpdate(todo.id, { text: editText.trim() });
+    onUpdate(todo.id, {
+      text: editText.trim(),
+      dueDate: editDueDate,
+    });
     setIsEditing(false);
     toast({
       title: '할 일이 수정되었습니다',
@@ -126,29 +129,23 @@ const TodoItem = ({
       duration: TOAST_DURATION,
       isClosable: true,
     });
-  }, [editText, onUpdate, todo.id, toast]);
+  }, [editText, editDueDate, onUpdate, todo.id, toast]);
 
-  const handleDueDateUpdate = useCallback(() => {
-    onUpdate(todo.id, { dueDate: editDueDate });
-    onClose();
-    toast({
-      title: '마감일이 수정되었습니다',
-      status: 'success',
-      duration: TOAST_DURATION,
-      isClosable: true,
-    });
-  }, [editDueDate, onUpdate, todo.id, onClose, toast]);
+  const handleCancel = useCallback(() => {
+    setEditText(todo.text);
+    setEditDueDate(todo.dueDate);
+    setIsEditing(false);
+  }, [todo.text, todo.dueDate]);
 
   const handleKeyPress = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') {
         handleUpdate();
       } else if (e.key === 'Escape') {
-        setIsEditing(false);
-        setEditText(todo.text);
+        handleCancel();
       }
     },
-    [handleUpdate, todo.text]
+    [handleUpdate, handleCancel]
   );
 
   const handleCheckboxChange = useCallback(
@@ -219,80 +216,102 @@ const TodoItem = ({
                   padding={2}
                 />
               </Box>
-              <VStack flex={1} align="start" spacing={1}>
+              <VStack flex={1} align="start" spacing={2}>
                 {isEditing ? (
-                  <Input
-                    value={editText}
-                    onChange={(e) => setEditText(e.target.value)}
-                    onBlur={handleUpdate}
-                    onKeyDown={handleKeyPress}
-                    autoFocus
-                    size="lg"
-                    variant="filled"
-                    _hover={{ bg: 'gray.100' }}
-                    _focus={{ bg: 'white', borderColor: 'blue.500' }}
-                  />
+                  <>
+                    <Input
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                      onKeyDown={handleKeyPress}
+                      autoFocus
+                      size="lg"
+                      variant="filled"
+                      _hover={{ bg: 'gray.100' }}
+                      _focus={{ bg: 'white', borderColor: 'blue.500' }}
+                    />
+                    <FormControl>
+                      <FormLabel fontSize="sm" mb={1}>
+                        마감일
+                      </FormLabel>
+                      <Input
+                        type="datetime-local"
+                        value={editDueDate || ''}
+                        onChange={(e) => setEditDueDate(e.target.value || null)}
+                        size="md"
+                      />
+                    </FormControl>
+                  </>
                 ) : (
-                  <Text
-                    textDecoration={todo.completed ? 'line-through' : 'none'}
-                    color={todo.completed ? 'gray.500' : 'black'}
-                    fontSize="lg"
-                  >
-                    {todo.text}
-                  </Text>
-                )}
-                {todo.dueDate && (
-                  <Badge
-                    colorScheme={getDateStatus(todo.dueDate) || 'gray'}
-                    fontSize="sm"
-                    px={2}
-                    py={1}
-                    borderRadius="md"
-                    cursor="pointer"
-                    onClick={onOpen}
-                    _hover={{ opacity: 0.8 }}
-                  >
-                    마감일: {formatDate(todo.dueDate)}
-                  </Badge>
-                )}
-                {!todo.dueDate && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    colorScheme="blue"
-                    onClick={onOpen}
-                    px={2}
-                    py={1}
-                    height="auto"
-                    fontSize="sm"
-                  >
-                    마감일 추가
-                  </Button>
+                  <>
+                    <Text
+                      textDecoration={todo.completed ? 'line-through' : 'none'}
+                      color={todo.completed ? 'gray.500' : 'black'}
+                      fontSize="lg"
+                    >
+                      {todo.text}
+                    </Text>
+                    {todo.dueDate && (
+                      <Badge
+                        colorScheme={getDateStatus(todo.dueDate) || 'gray'}
+                        fontSize="sm"
+                        px={2}
+                        py={1}
+                        borderRadius="md"
+                      >
+                        마감일: {formatDate(todo.dueDate)}
+                      </Badge>
+                    )}
+                  </>
                 )}
               </VStack>
               <HStack spacing={2}>
-                <IconButton
-                  aria-label="Edit todo"
-                  icon={<EditIcon />}
-                  onClick={handleEdit}
-                  colorScheme="blue"
-                  variant="ghost"
-                  size="lg"
-                  padding={2}
-                  _hover={{ bg: 'blue.50' }}
-                  display={isEditing ? 'none' : 'flex'}
-                />
-                <IconButton
-                  aria-label="Delete todo"
-                  icon={<DeleteIcon />}
-                  onClick={handleDelete}
-                  colorScheme="red"
-                  variant="ghost"
-                  size="lg"
-                  padding={2}
-                  _hover={{ bg: 'red.50' }}
-                  display={isEditing ? 'none' : 'flex'}
-                />
+                {isEditing ? (
+                  <>
+                    <IconButton
+                      aria-label="Save changes"
+                      icon={<CheckIcon />}
+                      onClick={handleUpdate}
+                      colorScheme="green"
+                      variant="ghost"
+                      size="lg"
+                      padding={2}
+                      _hover={{ bg: 'green.50' }}
+                    />
+                    <IconButton
+                      aria-label="Cancel editing"
+                      icon={<CloseIcon />}
+                      onClick={handleCancel}
+                      colorScheme="gray"
+                      variant="ghost"
+                      size="lg"
+                      padding={2}
+                      _hover={{ bg: 'gray.50' }}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <IconButton
+                      aria-label="Edit todo"
+                      icon={<EditIcon />}
+                      onClick={handleEdit}
+                      colorScheme="blue"
+                      variant="ghost"
+                      size="lg"
+                      padding={2}
+                      _hover={{ bg: 'blue.50' }}
+                    />
+                    <IconButton
+                      aria-label="Delete todo"
+                      icon={<DeleteIcon />}
+                      onClick={handleDelete}
+                      colorScheme="red"
+                      variant="ghost"
+                      size="lg"
+                      padding={2}
+                      _hover={{ bg: 'red.50' }}
+                    />
+                  </>
+                )}
               </HStack>
             </HStack>
           </div>
@@ -320,7 +339,7 @@ const TodoItem = ({
             </Button>
             <Button
               colorScheme="blue"
-              onClick={handleDueDateUpdate}
+              onClick={handleUpdate}
               isDisabled={editDueDate === todo.dueDate}
             >
               저장
