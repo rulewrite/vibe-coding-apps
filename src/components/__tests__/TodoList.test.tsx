@@ -21,6 +21,8 @@ describe('TodoList 컴포넌트', () => {
 
   const mockOnToggle = jest.fn();
   const mockOnDelete = jest.fn();
+  const mockOnReorder = jest.fn();
+  const mockOnUpdate = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -33,6 +35,8 @@ describe('TodoList 컴포넌트', () => {
           todos={mockTodos}
           onToggle={mockOnToggle}
           onDelete={mockOnDelete}
+          onReorder={mockOnReorder}
+          onUpdate={mockOnUpdate}
         />
       </ChakraProvider>
     );
@@ -82,5 +86,28 @@ describe('TodoList 컴포넌트', () => {
 
     const todoItem = screen.getByText('테스트 할 일 2').closest('div');
     expect(todoItem).not.toHaveTextContent('마감일');
+  });
+
+  it('드래그 앤 드롭이 정상적으로 동작한다', () => {
+    renderComponent();
+    const todoItems = screen.getAllByRole('button', { name: /drag handle/i });
+    const sourceItem = todoItems[0];
+    const destinationItem = todoItems[1];
+
+    // 드래그 시작
+    fireEvent.mouseDown(sourceItem);
+    fireEvent.dragStart(sourceItem);
+
+    // 드래그 중
+    fireEvent.dragOver(destinationItem);
+
+    // 드래그 종료
+    fireEvent.drop(destinationItem);
+    fireEvent.dragEnd(sourceItem, {
+      source: { index: 0 },
+      destination: { index: 1 },
+    });
+
+    expect(mockOnReorder).toHaveBeenCalledWith(0, 1);
   });
 });

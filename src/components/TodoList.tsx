@@ -24,7 +24,7 @@ import {
   useToast,
   VStack,
 } from '@chakra-ui/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { DropResult } from 'react-beautiful-dnd';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import type { Todo } from '../types';
@@ -92,6 +92,7 @@ const TodoItem = ({
   const { isOpen, onClose } = useDisclosure();
   const [editDueDate, setEditDueDate] = useState<string | null>(todo.dueDate);
   const [showSecret, setShowSecret] = useState(false);
+  const clickCountRef = useRef(0);
 
   // 비밀 메시지와 Konami 코드 힌트 이스터에그 감지
   useEffect(() => {
@@ -152,21 +153,18 @@ const TodoItem = ({
 
   // 이스터에그: 제목 더블클릭
   const handleTitleClick = useCallback(() => {
-    setClickCount((prev) => {
-      const newCount = prev + 1;
-      if (newCount === 5) {
-        toast({
-          title: '🎨 테마 변경!',
-          description: '다크 모드가 토글되었습니다.',
-          status: 'info',
-          duration: 2000,
-          isClosable: true,
-        });
-        toggleColorMode();
-        return 0;
-      }
-      return newCount;
-    });
+    clickCountRef.current += 1;
+    if (clickCountRef.current === 5) {
+      toast({
+        title: '🎨 테마 변경!',
+        description: '다크 모드가 토글되었습니다.',
+        status: 'info',
+        duration: 2000,
+        isClosable: true,
+      });
+      toggleColorMode();
+      clickCountRef.current = 0;
+    }
   }, [toast, toggleColorMode]);
 
   const handleTextChange = useCallback(

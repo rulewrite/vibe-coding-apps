@@ -62,4 +62,11 @@ describe('AddTodo 컴포넌트', () => {
 
     expect(mockOnAdd).not.toHaveBeenCalled();
   });
+
+  it('시간 입력이 정상적으로 동작한다', () => {
+    renderComponent();
+    const timeInput = screen.getByDisplayValue('00:00') as HTMLInputElement;
+    fireEvent.change(timeInput, { target: { value: '14:30' } });
+    expect(timeInput.value).toBe('14:30');
+  });
 });
