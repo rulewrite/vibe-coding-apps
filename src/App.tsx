@@ -83,6 +83,11 @@ function App() {
     []
   );
 
+  const deleteAllTodos = useCallback(() => {
+    setTodos([]);
+    localStorage.removeItem(STORAGE_KEY);
+  }, []);
+
   return (
     <ChakraProvider theme={theme}>
       <ColorModeScript initialColorMode={theme.config.initialColorMode} />
@@ -97,6 +102,7 @@ function App() {
               onDelete={deleteTodo}
               onReorder={reorderTodos}
               onUpdate={updateTodo}
+              onDeleteAll={deleteAllTodos}
             />
           </VStack>
         </Container>

@@ -82,4 +82,31 @@ describe('App 컴포넌트', () => {
 
     expect(screen.getAllByText('스토리지 테스트').length).toBeGreaterThan(0);
   });
+
+  it('전체 삭제 기능이 정상적으로 동작한다', () => {
+    renderComponent();
+
+    // 할 일 추가
+    const input = screen.getByPlaceholderText('할 일을 입력하세요...');
+    const addButton = screen.getByRole('button', { name: '추가' });
+    fireEvent.change(input, { target: { value: '삭제 테스트 1' } });
+    fireEvent.click(addButton);
+    fireEvent.change(input, { target: { value: '삭제 테스트 2' } });
+    fireEvent.click(addButton);
+
+    // 전체 삭제 버튼 클릭
+    const deleteAllButton = screen.getByText('전체 삭제');
+    fireEvent.click(deleteAllButton);
+
+    // 확인 모달에서 삭제 버튼 클릭
+    const confirmButton = screen.getByText('삭제');
+    fireEvent.click(confirmButton);
+
+    // 할 일이 모두 삭제되었는지 확인
+    expect(screen.queryByText('삭제 테스트 1')).not.toBeInTheDocument();
+    expect(screen.queryByText('삭제 테스트 2')).not.toBeInTheDocument();
+
+    // 로컬 스토리지가 비워졌는지 확인
+    expect(localStorage.getItem('todos')).toBe('[]');
+  });
 });

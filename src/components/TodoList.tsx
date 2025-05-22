@@ -38,6 +38,7 @@ interface TodoListProps {
     id: number,
     updates: { text?: string; dueDate?: string | null }
   ) => void;
+  onDeleteAll: () => void;
 }
 
 const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
@@ -469,7 +470,26 @@ function TodoList({
   onDelete,
   onReorder,
   onUpdate,
+  onDeleteAll,
 }: TodoListProps) {
+  const toast = useToast();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const handleDeleteAll = useCallback(() => {
+    onOpen();
+  }, [onOpen]);
+
+  const confirmDeleteAll = useCallback(() => {
+    onDeleteAll();
+    onClose();
+    toast({
+      title: '모든 할 일이 삭제되었습니다',
+      status: 'info',
+      duration: 2000,
+      isClosable: true,
+    });
+  }, [onDeleteAll, onClose, toast]);
+
   const handleDragEnd = useCallback(
     (result: DropResult) => {
       if (!result.destination) return;
@@ -486,6 +506,18 @@ function TodoList({
 
   return (
     <Box width="100%">
+      {todos.length > 0 && (
+        <Button
+          colorScheme="red"
+          variant="outline"
+          size="sm"
+          mb={4}
+          onClick={handleDeleteAll}
+          leftIcon={<DeleteIcon />}
+        >
+          전체 삭제
+        </Button>
+      )}
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="todo-list">
           {(provided) => (
@@ -511,6 +543,23 @@ function TodoList({
           )}
         </Droppable>
       </DragDropContext>
+
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>전체 삭제 확인</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>정말로 모든 할 일을 삭제하시겠습니까?</ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" mr={3} onClick={onClose}>
+              취소
+            </Button>
+            <Button colorScheme="red" onClick={confirmDeleteAll}>
+              삭제
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }

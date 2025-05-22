@@ -23,6 +23,7 @@ describe('TodoList 컴포넌트', () => {
   const mockOnDelete = jest.fn();
   const mockOnReorder = jest.fn();
   const mockOnUpdate = jest.fn();
+  const mockOnDeleteAll = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -37,6 +38,7 @@ describe('TodoList 컴포넌트', () => {
           onDelete={mockOnDelete}
           onReorder={mockOnReorder}
           onUpdate={mockOnUpdate}
+          onDeleteAll={mockOnDeleteAll}
         />
       </ChakraProvider>
     );
@@ -109,5 +111,58 @@ describe('TodoList 컴포넌트', () => {
     });
 
     expect(mockOnReorder).toHaveBeenCalledWith(0, 1);
+  });
+
+  it('전체 삭제 버튼이 정상적으로 동작한다', () => {
+    renderComponent();
+
+    // 전체 삭제 버튼 클릭
+    const deleteAllButton = screen.getByText('전체 삭제');
+    fireEvent.click(deleteAllButton);
+
+    // 확인 모달이 표시되는지 확인
+    expect(screen.getByText('전체 삭제 확인')).toBeInTheDocument();
+    expect(
+      screen.getByText('정말로 모든 할 일을 삭제하시겠습니까?')
+    ).toBeInTheDocument();
+
+    // 삭제 버튼 클릭
+    const confirmButton = screen.getByText('삭제');
+    fireEvent.click(confirmButton);
+
+    // onDeleteAll이 호출되었는지 확인
+    expect(mockOnDeleteAll).toHaveBeenCalled();
+  });
+
+  it('전체 삭제 취소가 정상적으로 동작한다', () => {
+    renderComponent();
+
+    // 전체 삭제 버튼 클릭
+    const deleteAllButton = screen.getByText('전체 삭제');
+    fireEvent.click(deleteAllButton);
+
+    // 취소 버튼 클릭
+    const cancelButton = screen.getByText('취소');
+    fireEvent.click(cancelButton);
+
+    // onDeleteAll이 호출되지 않았는지 확인
+    expect(mockOnDeleteAll).not.toHaveBeenCalled();
+  });
+
+  it('할 일이 없을 때는 전체 삭제 버튼이 표시되지 않는다', () => {
+    render(
+      <ChakraProvider>
+        <TodoList
+          todos={[]}
+          onToggle={mockOnToggle}
+          onDelete={mockOnDelete}
+          onReorder={mockOnReorder}
+          onUpdate={mockOnUpdate}
+          onDeleteAll={mockOnDeleteAll}
+        />
+      </ChakraProvider>
+    );
+
+    expect(screen.queryByText('전체 삭제')).not.toBeInTheDocument();
   });
 });
