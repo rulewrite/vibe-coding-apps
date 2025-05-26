@@ -15,7 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(statusBarItem);
 
   // 타이머 시작 명령어
-  let startTimer = vscode.commands.registerCommand(
+  let startTimerCommand = vscode.commands.registerCommand(
     'vibe-coding-pomodoro-timer.startTimer',
     () => {
       if (!isRunning) {
@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
           timeLeft--;
           updateStatusBar();
           if (timeLeft <= 0) {
-            stopTimer();
+            handleStopTimer();
             vscode.window.showInformationMessage(
               '뽀모도로 세션이 종료되었습니다! 휴식을 취하세요.'
             );
@@ -36,28 +36,32 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   // 타이머 정지 명령어
-  let stopTimer = vscode.commands.registerCommand(
+  let stopTimerCommand = vscode.commands.registerCommand(
     'vibe-coding-pomodoro-timer.stopTimer',
     () => {
-      stopTimer();
+      handleStopTimer();
     }
   );
 
   // 타이머 리셋 명령어
-  let resetTimer = vscode.commands.registerCommand(
+  let resetTimerCommand = vscode.commands.registerCommand(
     'vibe-coding-pomodoro-timer.resetTimer',
     () => {
-      stopTimer();
+      handleStopTimer();
       timeLeft = 25 * 60;
       updateStatusBar();
     }
   );
 
-  context.subscriptions.push(startTimer, stopTimer, resetTimer);
+  context.subscriptions.push(
+    startTimerCommand,
+    stopTimerCommand,
+    resetTimerCommand
+  );
   updateStatusBar();
 }
 
-function stopTimer() {
+function handleStopTimer() {
   if (timerInterval) {
     clearInterval(timerInterval);
     timerInterval = undefined;
