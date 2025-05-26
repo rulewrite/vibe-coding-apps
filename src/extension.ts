@@ -2,21 +2,55 @@ import * as vscode from 'vscode';
 
 let statusBarItem: vscode.StatusBarItem;
 let timerInterval: NodeJS.Timeout | undefined;
-let timeLeft: number = 25 * 60; // 기본 25분
+let timeLeft: number = 25 * 60; // 기본값
 let isRunning: boolean = false;
 let isBreak: boolean = false;
-
-// 타이머 설정
-const TIMER_SETTINGS = {
-  FOCUS_TIME: 25 * 60, // 집중 시간: 25분
-  SHORT_BREAK: 5 * 60, // 짧은 휴식: 5분
-  LONG_BREAK: 15 * 60, // 긴 휴식: 15분
-  SESSIONS_BEFORE_LONG_BREAK: 4, // 긴 휴식 전 필요한 세션 수
-};
-
 let completedSessions: number = 0;
 
+// 설정값을 가져오는 함수
+function getSettings() {
+  const config = vscode.workspace.getConfiguration('pomodoroTimer');
+  return {
+    FOCUS_TIME: config.get<number>('focusTime', 25) * 60,
+    SHORT_BREAK: config.get<number>('shortBreakTime', 5) * 60,
+    LONG_BREAK: config.get<number>('longBreakTime', 15) * 60,
+    SESSIONS_BEFORE_LONG_BREAK: config.get<number>(
+      'sessionsBeforeLongBreak',
+      4
+    ),
+  };
+}
+
+// 설정이 변경될 때 호출되는 함수
+function updateTimerSettings() {
+  const settings = getSettings();
+  if (!isRunning) {
+    if (!isBreak) {
+      timeLeft = settings.FOCUS_TIME;
+    } else {
+      timeLeft =
+        completedSessions % settings.SESSIONS_BEFORE_LONG_BREAK === 0
+          ? settings.LONG_BREAK
+          : settings.SHORT_BREAK;
+    }
+    updateStatusBar();
+  }
+}
+
 export function activate(context: vscode.ExtensionContext) {
+  // 설정 변경 감지
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration('pomodoroTimer')) {
+        updateTimerSettings();
+      }
+    })
+  );
+
+  // 초기 설정 적용
+  const settings = getSettings();
+  timeLeft = settings.FOCUS_TIME;
+
   // 상태바 아이템 생성
   statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Left,
@@ -61,7 +95,7 @@ export function activate(context: vscode.ExtensionContext) {
     }
   );
 
-  // 다음 세션으로 이동 명령어 추가
+  // 다음 세션으로 이동 명령어
   let nextSessionCommand = vscode.commands.registerCommand(
     'vibe-coding-pomodoro-timer.nextSession',
     () => {
@@ -69,10 +103,8 @@ export function activate(context: vscode.ExtensionContext) {
       if (isBreak) {
         resetToFocusTime();
       } else {
-        if (
-          completedSessions % TIMER_SETTINGS.SESSIONS_BEFORE_LONG_BREAK ===
-          0
-        ) {
+        const settings = getSettings();
+        if (completedSessions % settings.SESSIONS_BEFORE_LONG_BREAK === 0) {
           startLongBreak();
         } else {
           startShortBreak();
@@ -93,9 +125,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 function handleTimerComplete() {
   handleStopTimer();
+  const settings = getSettings();
   if (!isBreak) {
     completedSessions++;
-    if (completedSessions % TIMER_SETTINGS.SESSIONS_BEFORE_LONG_BREAK === 0) {
+    if (completedSessions % settings.SESSIONS_BEFORE_LONG_BREAK === 0) {
       vscode.window.showInformationMessage(
         '집중 시간이 종료되었습니다! 긴 휴식 시간을 시작합니다.'
       );
@@ -116,18 +149,21 @@ function handleTimerComplete() {
 }
 
 function startShortBreak() {
+  const settings = getSettings();
   isBreak = true;
-  timeLeft = TIMER_SETTINGS.SHORT_BREAK;
+  timeLeft = settings.SHORT_BREAK;
 }
 
 function startLongBreak() {
+  const settings = getSettings();
   isBreak = true;
-  timeLeft = TIMER_SETTINGS.LONG_BREAK;
+  timeLeft = settings.LONG_BREAK;
 }
 
 function resetToFocusTime() {
+  const settings = getSettings();
   isBreak = false;
-  timeLeft = TIMER_SETTINGS.FOCUS_TIME;
+  timeLeft = settings.FOCUS_TIME;
 }
 
 function handleStopTimer() {

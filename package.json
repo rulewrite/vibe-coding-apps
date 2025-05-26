@@ -17,6 +17,39 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "뽀모도로 타이머",
+      "properties": {
+        "pomodoroTimer.focusTime": {
+          "type": "number",
+          "default": 25,
+          "minimum": 1,
+          "maximum": 60,
+          "description": "집중 시간 (분)"
+        },
+        "pomodoroTimer.shortBreakTime": {
+          "type": "number",
+          "default": 5,
+          "minimum": 1,
+          "maximum": 30,
+          "description": "짧은 휴식 시간 (분)"
+        },
+        "pomodoroTimer.longBreakTime": {
+          "type": "number",
+          "default": 15,
+          "minimum": 1,
+          "maximum": 60,
+          "description": "긴 휴식 시간 (분)"
+        },
+        "pomodoroTimer.sessionsBeforeLongBreak": {
+          "type": "number",
+          "default": 4,
+          "minimum": 1,
+          "maximum": 10,
+          "description": "긴 휴식 전 필요한 집중 세션 수"
+        }
+      }
+    },
     "commands": [
       {
         "command": "vibe-coding-pomodoro-timer.startTimer",
