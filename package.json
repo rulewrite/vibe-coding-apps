@@ -12,7 +12,8 @@
   "activationEvents": [
     "onCommand:vibe-coding-pomodoro-timer.startTimer",
     "onCommand:vibe-coding-pomodoro-timer.stopTimer",
-    "onCommand:vibe-coding-pomodoro-timer.resetTimer"
+    "onCommand:vibe-coding-pomodoro-timer.resetTimer",
+    "onCommand:vibe-coding-pomodoro-timer.nextSession"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -28,6 +29,10 @@
       {
         "command": "vibe-coding-pomodoro-timer.resetTimer",
         "title": "뽀모도로 타이머 리셋"
+      },
+      {
+        "command": "vibe-coding-pomodoro-timer.nextSession",
+        "title": "다음 세션으로 이동"
       }
     ],
     "statusBar": {
