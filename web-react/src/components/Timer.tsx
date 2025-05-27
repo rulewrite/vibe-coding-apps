@@ -1,12 +1,5 @@
 import { PlayArrow, Refresh, SkipNext, Stop } from '@mui/icons-material';
-import {
-  Box,
-  Button,
-  Grid,
-  LinearProgress,
-  Paper,
-  Typography,
-} from '@mui/material';
+import { Box, Button, LinearProgress, Paper, Typography } from '@mui/material';
 import { useTimer } from '../contexts/TimerContext';
 
 export function Timer() {
@@ -91,28 +84,24 @@ export function Timer() {
         </Button>
       </Box>
 
-      <Grid container spacing={2}>
-        <Grid item xs={6}>
-          <Paper elevation={2} sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="subtitle2" color="text.secondary">
-              완료된 세션
-            </Typography>
-            <Typography variant="h4" color="success.main">
-              {state.completedSessions}
-            </Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={6}>
-          <Paper elevation={2} sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="subtitle2" color="text.secondary">
-              총 집중 시간
-            </Typography>
-            <Typography variant="h4" color="success.main">
-              {Math.floor(state.totalFocusTime / 60)}분
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+      <Box sx={{ display: 'flex', gap: 2 }}>
+        <Paper elevation={2} sx={{ p: 2, textAlign: 'center', flex: 1 }}>
+          <Typography variant="subtitle2" color="text.secondary">
+            완료된 세션
+          </Typography>
+          <Typography variant="h4" color="success.main">
+            {state.completedSessions}
+          </Typography>
+        </Paper>
+        <Paper elevation={2} sx={{ p: 2, textAlign: 'center', flex: 1 }}>
+          <Typography variant="subtitle2" color="text.secondary">
+            총 집중 시간
+          </Typography>
+          <Typography variant="h4" color="success.main">
+            {Math.floor(state.totalFocusTime / 60)}분
+          </Typography>
+        </Paper>
+      </Box>
     </Box>
   );
 }
