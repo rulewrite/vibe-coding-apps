@@ -1,108 +1,73 @@
-// 타이머 상태 관리
-let timerState = {
-  isRunning: false,
-  isBreak: false,
-  timeLeft: 0,
-  completedSessions: 0,
+import { PomodoroTimer } from '../../pomodoro-core';
+
+const defaultSettings = {
+  focusTime: 25,
+  shortBreakTime: 5,
+  longBreakTime: 15,
+  sessionsBeforeLongBreak: 4,
 };
 
-// 알람 이름
-const TIMER_ALARM = 'pomodoroTimer';
+// 싱글톤 인스턴스 생성
+const timer = new PomodoroTimer(defaultSettings);
 
-// 타이머 시작
-function startTimer(timeLeft) {
-  timerState.isRunning = true;
-  timerState.timeLeft = timeLeft;
-
-  // 1초마다 실행되는 알람 생성
-  chrome.alarms.create(TIMER_ALARM, {
-    periodInMinutes: 1 / 60, // 1초
-  });
-}
-
-// 타이머 정지
-function stopTimer() {
-  timerState.isRunning = false;
-  chrome.alarms.clear(TIMER_ALARM);
-}
-
-// 타이머 리셋
-async function resetTimer() {
-  stopTimer();
-  const settings = await getSettings();
-  timerState.isBreak = false;
-  timerState.timeLeft = settings.focusTime * 60;
-  timerState.completedSessions = 0;
-}
-
-// 다음 세션으로 이동
-async function nextSession(timeLeft) {
-  stopTimer();
-  timerState.timeLeft = timeLeft;
-  timerState.isBreak = !timerState.isBreak;
-
-  if (timerState.isRunning) {
-    startTimer(timeLeft);
+// 설정 불러오기
+chrome.storage.local.get('pomodoroSettings', (result) => {
+  if (result.pomodoroSettings) {
+    timer.updateSettings(result.pomodoroSettings);
   }
-}
+});
 
-// 설정 가져오기
-async function getSettings() {
-  const result = await chrome.storage.sync.get({
-    focusTime: 25,
-    shortBreakTime: 5,
-    longBreakTime: 15,
-    sessionsBeforeLongBreak: 4,
-  });
-  return result;
-}
+// 타이머 상태 변경 시 popup에 알림
+timer.onChange((state) => {
+  chrome.runtime.sendMessage({ type: 'TIMER_UPDATE', state });
+});
 
-// 알람 이벤트 처리
-chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === TIMER_ALARM && timerState.isRunning) {
-    timerState.timeLeft--;
+// 타이머 완료 시 알림
+timer.onChange((state) => {
+  if (state.timeLeft === 0) {
+    const title =
+      state.mode === 'focus' ? '집중 시간 완료!' : '휴식 시간 완료!';
+    const message =
+      state.mode === 'focus'
+        ? '휴식 시간을 시작합니다.'
+        : '다음 집중 시간을 시작합니다.';
 
-    // 모든 팝업에 타이머 업데이트 전송
-    chrome.runtime.sendMessage({
-      action: 'timerUpdate',
-      timeLeft: timerState.timeLeft,
+    chrome.notifications.create({
+      type: 'basic',
+      iconUrl: 'icons/icon128.png',
+      title,
+      message,
     });
-
-    // 타이머 종료 체크
-    if (timerState.timeLeft <= 0) {
-      stopTimer();
-      chrome.runtime.sendMessage({ action: 'timerComplete' });
-    }
   }
 });
 
 // 메시지 처리
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  switch (message.action) {
-    case 'startTimer':
-      startTimer(message.timeLeft);
+  switch (message.type) {
+    case 'GET_STATE':
+      sendResponse(timer.getState());
       break;
-    case 'stopTimer':
-      stopTimer();
+    case 'START_TIMER':
+      timer.start();
+      sendResponse(timer.getState());
       break;
-    case 'resetTimer':
-      resetTimer();
+    case 'STOP_TIMER':
+      timer.stop();
+      sendResponse(timer.getState());
       break;
-    case 'nextSession':
-      nextSession(message.timeLeft);
+    case 'RESET_TIMER':
+      timer.reset();
+      sendResponse(timer.getState());
       break;
-    case 'getTimerState':
-      sendResponse(timerState);
+    case 'NEXT_SESSION':
+      timer.nextSession();
+      sendResponse(timer.getState());
+      break;
+    case 'UPDATE_SETTINGS':
+      timer.updateSettings(message.settings);
+      chrome.storage.local.set({ pomodoroSettings: message.settings });
+      sendResponse(timer.getState());
       break;
   }
-  return true;
+  return true; // 비동기 응답을 위해 true 반환
 });
-
-// 초기화
-async function initialize() {
-  const settings = await getSettings();
-  timerState.timeLeft = settings.focusTime * 60;
-}
-
-// 익스텐션 설치/업데이트 시 초기화
-chrome.runtime.onInstalled.addListener(initialize);

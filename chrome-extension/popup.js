@@ -10,11 +10,14 @@ let timerState = {
 // DOM 요소
 const timerDisplay = document.getElementById('timer');
 const modeDisplay = document.getElementById('mode');
-const progressBar = document.getElementById('progress-bar');
-const startBtn = document.getElementById('startBtn');
-const stopBtn = document.getElementById('stopBtn');
-const resetBtn = document.getElementById('resetBtn');
-const nextBtn = document.getElementById('nextBtn');
+const progressBar = document.getElementById('progress');
+const startButton = document.getElementById('start');
+const stopButton = document.getElementById('stop');
+const resetButton = document.getElementById('reset');
+const nextButton = document.getElementById('next');
+const settingsButton = document.getElementById('settings');
+
+let currentState = null;
 
 // 설정 가져오기
 async function getSettings() {
@@ -27,119 +30,80 @@ async function getSettings() {
   return result;
 }
 
-// 타이머 업데이트
-function updateTimerDisplay() {
-  const minutes = Math.floor(timerState.timeLeft / 60);
-  const seconds = timerState.timeLeft % 60;
+// 타이머 상태 업데이트
+function updateTimerDisplay(state) {
+  currentState = state;
+  const minutes = Math.floor(state.timeLeft / 60);
+  const seconds = state.timeLeft % 60;
   timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds
     .toString()
     .padStart(2, '0')}`;
 
-  // 진행률 업데이트
-  const progress =
-    ((timerState.totalTime - timerState.timeLeft) / timerState.totalTime) * 100;
+  // 모드 표시
+  switch (state.mode) {
+    case 'focus':
+      modeDisplay.textContent = '집중 시간';
+      break;
+    case 'shortBreak':
+      modeDisplay.textContent = '짧은 휴식';
+      break;
+    case 'longBreak':
+      modeDisplay.textContent = '긴 휴식';
+      break;
+  }
+
+  // 진행 바 업데이트
+  const totalTime =
+    state.mode === 'focus'
+      ? 25 * 60
+      : state.mode === 'shortBreak'
+      ? 5 * 60
+      : 15 * 60;
+  const progress = ((totalTime - state.timeLeft) / totalTime) * 100;
   progressBar.style.width = `${progress}%`;
 
-  // 모드 표시 업데이트
-  modeDisplay.textContent = timerState.isBreak ? '휴식 시간' : '집중 시간';
+  // 버튼 상태 업데이트
+  startButton.style.display = state.isRunning ? 'none' : 'block';
+  stopButton.style.display = state.isRunning ? 'block' : 'none';
 }
 
-// 타이머 시작
-async function startTimer() {
-  if (!timerState.isRunning) {
-    timerState.isRunning = true;
-    startBtn.style.display = 'none';
-    stopBtn.style.display = 'block';
-
-    // 백그라운드에 타이머 시작 메시지 전송
-    chrome.runtime.sendMessage({
-      action: 'startTimer',
-      timeLeft: timerState.timeLeft,
-    });
-  }
+// 타이머 제어 함수
+function startTimer() {
+  chrome.runtime.sendMessage({ type: 'START_TIMER' });
 }
 
-// 타이머 정지
 function stopTimer() {
-  if (timerState.isRunning) {
-    timerState.isRunning = false;
-    startBtn.style.display = 'block';
-    stopBtn.style.display = 'none';
-
-    // 백그라운드에 타이머 정지 메시지 전송
-    chrome.runtime.sendMessage({ action: 'stopTimer' });
-  }
+  chrome.runtime.sendMessage({ type: 'STOP_TIMER' });
 }
 
-// 타이머 리셋
-async function resetTimer() {
-  const settings = await getSettings();
-  timerState.isBreak = false;
-  timerState.timeLeft = settings.focusTime * 60;
-  timerState.totalTime = settings.focusTime * 60;
-  updateTimerDisplay();
-
-  // 백그라운드에 타이머 리셋 메시지 전송
-  chrome.runtime.sendMessage({ action: 'resetTimer' });
+function resetTimer() {
+  chrome.runtime.sendMessage({ type: 'RESET_TIMER' });
 }
 
-// 다음 세션으로 이동
-async function nextSession() {
-  const settings = await getSettings();
-  timerState.isBreak = !timerState.isBreak;
-
-  if (timerState.isBreak) {
-    if (timerState.completedSessions % settings.sessionsBeforeLongBreak === 0) {
-      timerState.timeLeft = settings.longBreakTime * 60;
-      timerState.totalTime = settings.longBreakTime * 60;
-    } else {
-      timerState.timeLeft = settings.shortBreakTime * 60;
-      timerState.totalTime = settings.shortBreakTime * 60;
-    }
-  } else {
-    timerState.timeLeft = settings.focusTime * 60;
-    timerState.totalTime = settings.focusTime * 60;
-  }
-
-  updateTimerDisplay();
-  // 백그라운드에 다음 세션 메시지 전송
-  chrome.runtime.sendMessage({
-    action: 'nextSession',
-    timeLeft: timerState.timeLeft,
-  });
+function nextSession() {
+  chrome.runtime.sendMessage({ type: 'NEXT_SESSION' });
 }
 
-// 이벤트 리스너 설정
-startBtn.addEventListener('click', startTimer);
-stopBtn.addEventListener('click', stopTimer);
-resetBtn.addEventListener('click', resetTimer);
-nextBtn.addEventListener('click', nextSession);
+// 이벤트 리스너
+startButton.addEventListener('click', startTimer);
+stopButton.addEventListener('click', stopTimer);
+resetButton.addEventListener('click', resetTimer);
+nextButton.addEventListener('click', nextSession);
+settingsButton.addEventListener('click', () => {
+  chrome.runtime.openOptionsPage();
+});
 
-// 백그라운드로부터 타이머 업데이트 수신
+// 메시지 리스너
 chrome.runtime.onMessage.addListener((message) => {
-  if (message.action === 'timerUpdate') {
-    timerState.timeLeft = message.timeLeft;
-    updateTimerDisplay();
-  } else if (message.action === 'timerComplete') {
-    timerState.isRunning = false;
-    startBtn.style.display = 'block';
-    stopBtn.style.display = 'none';
+  if (message.type === 'TIMER_UPDATE') {
+    updateTimerDisplay(message.state);
+  }
+});
 
-    if (!timerState.isBreak) {
-      timerState.completedSessions++;
-    }
-
-    // 알림 표시
-    chrome.notifications.create({
-      type: 'basic',
-      iconUrl: 'icons/icon128.png',
-      title: timerState.isBreak ? '휴식 시간 종료' : '집중 시간 종료',
-      message: timerState.isBreak
-        ? '다시 집중 시간을 시작합니다!'
-        : '휴식 시간을 시작합니다!',
-    });
-
-    nextSession();
+// 초기 상태 가져오기
+chrome.runtime.sendMessage({ type: 'GET_STATE' }, (state) => {
+  if (state) {
+    updateTimerDisplay(state);
   }
 });
 
@@ -148,16 +112,16 @@ async function initialize() {
   const settings = await getSettings();
   timerState.timeLeft = settings.focusTime * 60;
   timerState.totalTime = settings.focusTime * 60;
-  updateTimerDisplay();
+  updateTimerDisplay(timerState);
 
   // 현재 타이머 상태 확인
   chrome.runtime.sendMessage({ action: 'getTimerState' }, (response) => {
     if (response) {
       timerState = response;
-      updateTimerDisplay();
+      updateTimerDisplay(timerState);
       if (timerState.isRunning) {
-        startBtn.style.display = 'none';
-        stopBtn.style.display = 'block';
+        startButton.style.display = 'none';
+        stopButton.style.display = 'block';
       }
     }
   });
