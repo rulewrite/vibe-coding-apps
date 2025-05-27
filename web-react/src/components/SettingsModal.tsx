@@ -5,11 +5,10 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControlLabel,
-  Switch,
   TextField,
 } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { PomodoroSettings } from '../../../pomodoro-core';
 import { useTimer } from '../contexts/TimerContext';
 
 interface SettingsModalProps {
@@ -18,37 +17,50 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ open, onClose }: SettingsModalProps) {
-  const { settings, updateSettings } = useTimer();
-  const [localSettings, setLocalSettings] = useState(settings);
+  const { state, updateSettings } = useTimer();
+  const [settings, setSettings] = useState<PomodoroSettings>({
+    focusTime: 25,
+    shortBreakTime: 5,
+    longBreakTime: 15,
+    sessionsBeforeLongBreak: 4,
+  });
+
+  useEffect(() => {
+    // 모달이 열릴 때마다 현재 설정값으로 초기화
+    const savedSettings = localStorage.getItem('pomodoroSettings');
+    if (savedSettings) {
+      setSettings(JSON.parse(savedSettings));
+    }
+  }, [open]);
 
   const handleChange =
-    (field: keyof typeof settings) =>
+    (field: keyof PomodoroSettings) =>
     (event: React.ChangeEvent<HTMLInputElement>) => {
-      const value =
-        event.target.type === 'checkbox'
-          ? event.target.checked
-          : Math.max(1, Math.min(60, parseInt(event.target.value) || 1));
-
-      setLocalSettings((prev) => ({
+      const value = Math.max(
+        1,
+        Math.min(60, parseInt(event.target.value) || 1)
+      );
+      setSettings((prev) => ({
         ...prev,
         [field]: value,
       }));
     };
 
   const handleSave = () => {
-    updateSettings(localSettings);
+    updateSettings(settings);
+    localStorage.setItem('pomodoroSettings', JSON.stringify(settings));
     onClose();
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>설정</DialogTitle>
+      <DialogTitle>뽀모도로 타이머 설정</DialogTitle>
       <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
           <TextField
             label="집중 시간 (분)"
             type="number"
-            value={localSettings.focusTime}
+            value={settings.focusTime}
             onChange={handleChange('focusTime')}
             inputProps={{ min: 1, max: 60 }}
             fullWidth
@@ -56,35 +68,26 @@ export function SettingsModal({ open, onClose }: SettingsModalProps) {
           <TextField
             label="짧은 휴식 시간 (분)"
             type="number"
-            value={localSettings.shortBreakTime}
+            value={settings.shortBreakTime}
             onChange={handleChange('shortBreakTime')}
-            inputProps={{ min: 1, max: 30 }}
+            inputProps={{ min: 1, max: 60 }}
             fullWidth
           />
           <TextField
             label="긴 휴식 시간 (분)"
             type="number"
-            value={localSettings.longBreakTime}
+            value={settings.longBreakTime}
             onChange={handleChange('longBreakTime')}
             inputProps={{ min: 1, max: 60 }}
             fullWidth
           />
           <TextField
-            label="긴 휴식 전 필요한 집중 세션 수"
+            label="긴 휴식 전 세션 수"
             type="number"
-            value={localSettings.sessionsBeforeLongBreak}
+            value={settings.sessionsBeforeLongBreak}
             onChange={handleChange('sessionsBeforeLongBreak')}
             inputProps={{ min: 1, max: 10 }}
             fullWidth
-          />
-          <FormControlLabel
-            control={
-              <Switch
-                checked={localSettings.soundEnabled}
-                onChange={handleChange('soundEnabled')}
-              />
-            }
-            label="알림음"
           />
         </Box>
       </DialogContent>

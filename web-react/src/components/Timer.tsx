@@ -3,7 +3,7 @@ import { Box, Button, LinearProgress, Paper, Typography } from '@mui/material';
 import { useTimer } from '../contexts/TimerContext';
 
 export function Timer() {
-  const { state, startTimer, stopTimer, resetTimer, nextSession } = useTimer();
+  const { state, start, stop, reset, nextSession } = useTimer();
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -13,13 +13,31 @@ export function Timer() {
       .padStart(2, '0')}`;
   };
 
-  const progress = ((state.totalTime - state.timeLeft) / state.totalTime) * 100;
+  const getModeText = () => {
+    switch (state.mode) {
+      case 'focus':
+        return '집중 시간';
+      case 'shortBreak':
+        return '짧은 휴식';
+      case 'longBreak':
+        return '긴 휴식';
+    }
+  };
+
+  const progress =
+    (state.timeLeft /
+      (state.mode === 'focus'
+        ? 25 * 60
+        : state.mode === 'shortBreak'
+        ? 5 * 60
+        : 15 * 60)) *
+    100;
 
   return (
     <Box sx={{ maxWidth: 600, mx: 'auto', p: 3 }}>
       <Paper elevation={3} sx={{ p: 4, mb: 3, textAlign: 'center' }}>
         <Typography variant="h6" color="text.secondary" gutterBottom>
-          {state.isBreak ? '휴식 시간' : '집중 시간'}
+          {getModeText()}
         </Typography>
         <Typography
           variant="h2"
@@ -36,7 +54,8 @@ export function Timer() {
             borderRadius: 4,
             backgroundColor: 'grey.200',
             '& .MuiLinearProgress-bar': {
-              backgroundColor: state.isBreak ? 'warning.main' : 'success.main',
+              backgroundColor:
+                state.mode === 'focus' ? 'success.main' : 'warning.main',
             },
           }}
         />
@@ -48,7 +67,7 @@ export function Timer() {
             variant="contained"
             color="error"
             startIcon={<Stop />}
-            onClick={stopTimer}
+            onClick={stop}
             size="large"
           >
             정지
@@ -58,7 +77,7 @@ export function Timer() {
             variant="contained"
             color="success"
             startIcon={<PlayArrow />}
-            onClick={startTimer}
+            onClick={start}
             size="large"
           >
             시작
@@ -68,7 +87,7 @@ export function Timer() {
           variant="contained"
           color="primary"
           startIcon={<Refresh />}
-          onClick={resetTimer}
+          onClick={reset}
           size="large"
         >
           리셋
