@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vibe Coding Pomodoro Timer</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>뽀모도로 타이머</h1>
+        <button id="settingsBtn" class="icon-button">⚙️</button>
+      </header>
+
+      <main>
+        <div class="timer-container">
+          <div class="mode" id="mode">집중 시간</div>
+          <div class="timer" id="timer">25:00</div>
+          <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="start" id="startBtn">시작</button>
+          <button class="stop" id="stopBtn">정지</button>
+          <button class="reset" id="resetBtn">리셋</button>
+          <button class="next" id="nextBtn">다음</button>
+        </div>
+
+        <div class="stats">
+          <div class="stat-item">
+            <span class="stat-label">완료된 세션</span>
+            <span class="stat-value" id="completedSessions">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">총 집중 시간</span>
+            <span class="stat-value" id="totalFocusTime">0분</span>
+          </div>
+        </div>
+      </main>
+
+      <!-- 설정 모달 -->
+      <div id="settingsModal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>설정</h2>
+            <button class="close-button">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="setting-item">
+              <label for="focusTime">집중 시간 (분)</label>
+              <input type="number" id="focusTime" min="1" max="60" value="25" />
+            </div>
+            <div class="setting-item">
+              <label for="shortBreakTime">짧은 휴식 시간 (분)</label>
+              <input
+                type="number"
+                id="shortBreakTime"
+                min="1"
+                max="30"
+                value="5"
+              />
+            </div>
+            <div class="setting-item">
+              <label for="longBreakTime">긴 휴식 시간 (분)</label>
+              <input
+                type="number"
+                id="longBreakTime"
+                min="1"
+                max="60"
+                value="15"
+              />
+            </div>
+            <div class="setting-item">
+              <label for="sessionsBeforeLongBreak"
+                >긴 휴식 전 필요한 집중 세션 수</label
+              >
+              <input
+                type="number"
+                id="sessionsBeforeLongBreak"
+                min="1"
+                max="10"
+                value="4"
+              />
+            </div>
+            <div class="setting-item">
+              <label for="soundEnabled">알림음</label>
+              <input type="checkbox" id="soundEnabled" checked />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button id="saveSettings" class="save-button">저장</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/timer.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
