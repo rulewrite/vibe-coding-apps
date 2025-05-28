@@ -1,0 +1,103 @@
+{
+  "name": "vibe-coding-pomodoro",
+  "displayName": "뽀모도로 타이머",
+  "description": "코딩에 집중할 수 있도록 도와주는 뽀모도로 타이머",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vibe-coding-pomodoro.start",
+        "title": "뽀모도로 시작"
+      },
+      {
+        "command": "vibe-coding-pomodoro.stop",
+        "title": "뽀모도로 중지"
+      },
+      {
+        "command": "vibe-coding-pomodoro.reset",
+        "title": "뽀모도로 리셋"
+      },
+      {
+        "command": "vibe-coding-pomodoro.nextSession",
+        "title": "다음 세션으로"
+      },
+      {
+        "command": "vibe-coding-pomodoro.openSettings",
+        "title": "뽀모도로 설정"
+      }
+    ],
+    "configuration": {
+      "title": "뽀모도로 타이머",
+      "properties": {
+        "vibe-coding-pomodoro.focusTime": {
+          "type": "number",
+          "default": 25,
+          "description": "뽀모도로 시간 (분)"
+        },
+        "vibe-coding-pomodoro.shortBreakTime": {
+          "type": "number",
+          "default": 5,
+          "description": "짧은 휴식 시간 (분)"
+        },
+        "vibe-coding-pomodoro.longBreakTime": {
+          "type": "number",
+          "default": 15,
+          "description": "긴 휴식 시간 (분)"
+        },
+        "vibe-coding-pomodoro.sessionsBeforeLongBreak": {
+          "type": "number",
+          "default": 4,
+          "description": "긴 휴식 전 뽀모도로 세션 수"
+        },
+        "vibe-coding-pomodoro.autoStartBreaks": {
+          "type": "boolean",
+          "default": true,
+          "description": "휴식 시간 자동 시작"
+        },
+        "vibe-coding-pomodoro.autoStartPomodoros": {
+          "type": "boolean",
+          "default": true,
+          "description": "뽀모도로 자동 시작"
+        },
+        "vibe-coding-pomodoro.notifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "알림 표시"
+        }
+      }
+    },
+    "statusBar": {
+      "alignment": "left",
+      "priority": 100
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext .ts",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^7.1.0",
+    "@typescript-eslint/parser": "^7.1.0",
+    "eslint": "^8.57.0",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@vibe-coding-pomodoro/core": "workspace:*"
+  }
+} 
