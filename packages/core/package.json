@@ -2,11 +2,13 @@
   "name": "@vibe-coding-pomodoro/core",
   "version": "1.0.0",
   "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch",
+    "dev": "tsc -w",
     "clean": "rimraf dist",
     "lint": "eslint src --ext .ts",
     "test": "jest"
@@ -15,6 +17,7 @@
     "@types/jest": "^29.5.12",
     "jest": "^29.7.0",
     "rimraf": "^5.0.5",
-    "ts-jest": "^29.1.2"
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.3.3"
   }
-} 
+}
