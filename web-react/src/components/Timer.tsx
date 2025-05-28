@@ -1,20 +1,69 @@
 import { PlayArrow, Refresh, SkipNext, Stop } from '@mui/icons-material';
 import { Box, Button, LinearProgress, Paper, Typography } from '@mui/material';
+import { useCallback, useEffect } from 'react';
 import { useTimer } from '../contexts/TimerContext';
 
 export function Timer() {
   const { state, start, stop, reset, nextSession } = useTimer();
 
+  // 컴포넌트가 리렌더링될 때마다 상태 로깅
+  useEffect(() => {
+    console.log('Timer component state updated:', {
+      timeRemaining: state.timeRemaining,
+      isRunning: state.isRunning,
+      currentSession: state.currentSession,
+      timestamp: new Date().toISOString(),
+    });
+  }, [state]);
+
+  const handleStart = useCallback(() => {
+    console.log('Start button clicked');
+    try {
+      start();
+    } catch (error) {
+      console.error('Error in handleStart:', error);
+    }
+  }, [start]);
+
+  const handleStop = useCallback(() => {
+    console.log('Stop button clicked');
+    try {
+      stop();
+    } catch (error) {
+      console.error('Error in handleStop:', error);
+    }
+  }, [stop]);
+
+  const handleReset = useCallback(() => {
+    console.log('Reset button clicked');
+    try {
+      reset();
+    } catch (error) {
+      console.error('Error in handleReset:', error);
+    }
+  }, [reset]);
+
+  const handleNextSession = useCallback(() => {
+    console.log('Next session button clicked');
+    try {
+      nextSession();
+    } catch (error) {
+      console.error('Error in handleNextSession:', error);
+    }
+  }, [nextSession]);
+
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds
+    const formatted = `${minutes.toString().padStart(2, '0')}:${remainingSeconds
       .toString()
       .padStart(2, '0')}`;
+    console.log('Formatting time:', { seconds, formatted });
+    return formatted;
   };
 
   const getModeText = () => {
-    switch (state.mode) {
+    switch (state.currentSession) {
       case 'focus':
         return '집중 시간';
       case 'shortBreak':
@@ -25,13 +74,19 @@ export function Timer() {
   };
 
   const progress =
-    (state.timeLeft /
-      (state.mode === 'focus'
-        ? 25 * 60
-        : state.mode === 'shortBreak'
-        ? 5 * 60
-        : 15 * 60)) *
+    (state.timeRemaining /
+      (state.currentSession === 'focus'
+        ? state.settings.focusTime * 60
+        : state.currentSession === 'shortBreak'
+        ? state.settings.shortBreakTime * 60
+        : state.settings.longBreakTime * 60)) *
     100;
+
+  console.log('Timer component rendering with state:', {
+    isRunning: state.isRunning,
+    timeRemaining: state.timeRemaining,
+    currentSession: state.currentSession,
+  });
 
   return (
     <Box sx={{ maxWidth: 600, mx: 'auto', p: 3 }}>
@@ -44,7 +99,7 @@ export function Timer() {
           component="div"
           sx={{ fontFamily: 'monospace', my: 2 }}
         >
-          {formatTime(state.timeLeft)}
+          {formatTime(state.timeRemaining)}
         </Typography>
         <LinearProgress
           variant="determinate"
@@ -55,7 +110,9 @@ export function Timer() {
             backgroundColor: 'grey.200',
             '& .MuiLinearProgress-bar': {
               backgroundColor:
-                state.mode === 'focus' ? 'success.main' : 'warning.main',
+                state.currentSession === 'focus'
+                  ? 'success.main'
+                  : 'warning.main',
             },
           }}
         />
@@ -67,8 +124,9 @@ export function Timer() {
             variant="contained"
             color="error"
             startIcon={<Stop />}
-            onClick={stop}
+            onClick={handleStop}
             size="large"
+            data-testid="stop-button"
           >
             정지
           </Button>
@@ -77,8 +135,9 @@ export function Timer() {
             variant="contained"
             color="success"
             startIcon={<PlayArrow />}
-            onClick={start}
+            onClick={handleStart}
             size="large"
+            data-testid="start-button"
           >
             시작
           </Button>
@@ -87,8 +146,9 @@ export function Timer() {
           variant="contained"
           color="primary"
           startIcon={<Refresh />}
-          onClick={reset}
+          onClick={handleReset}
           size="large"
+          data-testid="reset-button"
         >
           리셋
         </Button>
@@ -96,8 +156,9 @@ export function Timer() {
           variant="contained"
           color="warning"
           startIcon={<SkipNext />}
-          onClick={nextSession}
+          onClick={handleNextSession}
           size="large"
+          data-testid="next-button"
         >
           다음
         </Button>

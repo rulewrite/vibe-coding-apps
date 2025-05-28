@@ -1,9 +1,13 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import {
-  PomodoroSettings,
-  PomodoroState,
-  PomodoroTimer,
-} from '../../../pomodoro-core';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { PomodoroSettings, PomodoroState, PomodoroTimer } from '../core';
 
 const defaultSettings: PomodoroSettings = {
   focusTime: 25,
@@ -11,9 +15,6 @@ const defaultSettings: PomodoroSettings = {
   longBreakTime: 15,
   sessionsBeforeLongBreak: 4,
 };
-
-// 싱글톤 인스턴스 생성
-const timer = new PomodoroTimer(defaultSettings);
 
 interface TimerContextType {
   state: PomodoroState;
@@ -24,44 +25,81 @@ interface TimerContextType {
   updateSettings: (settings: PomodoroSettings) => void;
 }
 
-const TimerContext = createContext<TimerContextType>({
-  state: timer.getState(),
-  start: () => {},
-  stop: () => {},
-  reset: () => {},
-  nextSession: () => {},
-  updateSettings: () => {},
-});
+const TimerContext = createContext<TimerContextType | null>(null);
 
 export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [state, setState] = useState<PomodoroState>(timer.getState());
+  const timerRef = useRef<PomodoroTimer | null>(null);
+  const [state, setState] = useState<PomodoroState>(() => {
+    const timer = new PomodoroTimer(defaultSettings);
+    timerRef.current = timer;
+    return timer.getState();
+  });
 
   useEffect(() => {
+    const timer = timerRef.current;
+    if (!timer) return;
+
     const listener = (newState: PomodoroState) => {
       setState(newState);
     };
+
     timer.onChange(listener);
+
     return () => {
-      // TODO: 추후 offChange 메서드 추가 시 구독 해제
+      const currentTimer = timerRef.current;
+      if (currentTimer) {
+        const listeners = (currentTimer as any).listeners;
+        const index = listeners.indexOf(listener);
+        if (index > -1) {
+          listeners.splice(index, 1);
+        }
+      }
     };
   }, []);
 
-  const start = () => timer.start();
-  const stop = () => timer.stop();
-  const reset = () => timer.reset();
-  const nextSession = () => timer.nextSession();
-  const updateSettings = (settings: PomodoroSettings) =>
-    timer.updateSettings(settings);
+  const start = useCallback(() => {
+    timerRef.current?.start();
+  }, []);
+
+  const stop = useCallback(() => {
+    timerRef.current?.stop();
+  }, []);
+
+  const reset = useCallback(() => {
+    timerRef.current?.reset();
+  }, []);
+
+  const nextSession = useCallback(() => {
+    timerRef.current?.nextSession();
+  }, []);
+
+  const updateSettings = useCallback((settings: PomodoroSettings) => {
+    timerRef.current?.updateSettings(settings);
+  }, []);
+
+  const value = useMemo(
+    () => ({
+      state,
+      start,
+      stop,
+      reset,
+      nextSession,
+      updateSettings,
+    }),
+    [state, start, stop, reset, nextSession, updateSettings]
+  );
 
   return (
-    <TimerContext.Provider
-      value={{ state, start, stop, reset, nextSession, updateSettings }}
-    >
-      {children}
-    </TimerContext.Provider>
+    <TimerContext.Provider value={value}>{children}</TimerContext.Provider>
   );
 };
 
-export const useTimer = () => useContext(TimerContext);
+export const useTimer = () => {
+  const context = useContext(TimerContext);
+  if (!context) {
+    throw new Error('useTimer must be used within a TimerProvider');
+  }
+  return context;
+};
