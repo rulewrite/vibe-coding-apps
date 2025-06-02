@@ -355,10 +355,25 @@ class PreviewWidget(QWidget):
         
     def open_download_folder(self):
         """다운로드 폴더 열기"""
-        # TODO: 실제 다운로드 폴더 경로 사용
         download_path = os.path.join(os.getcwd(), "downloads")
         if os.path.exists(download_path):
-            os.system(f"open '{download_path}'")  # macOS
+            import platform
+            import subprocess
+            
+            system = platform.system()
+            try:
+                if system == "Windows":
+                    os.startfile(download_path)
+                elif system == "Darwin":  # macOS
+                    subprocess.run(["open", download_path])
+                elif system == "Linux":
+                    subprocess.run(["xdg-open", download_path])
+                else:
+                    # 지원하지 않는 OS의 경우 기본 파일 탐색기 시도
+                    subprocess.run(["xdg-open", download_path])
+            except Exception as e:
+                QMessageBox.information(self, "알림", 
+                                      f"폴더를 열 수 없습니다: {e}\n\n폴더 경로: {download_path}")
         else:
             QMessageBox.information(self, "알림", "다운로드 폴더가 존재하지 않습니다.")
             

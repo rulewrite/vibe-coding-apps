@@ -91,7 +91,13 @@ class ProgressWidget(QWidget):
         self.log_text = QTextEdit()
         self.log_text.setMaximumHeight(200)
         self.log_text.setReadOnly(True)
-        self.log_text.setFont(QFont("Monaco", 9))  # macOS의 기본 모노스페이스 폰트
+        
+        # 크로스 플랫폼 모노스페이스 폰트 설정
+        font = QFont()
+        font.setFamily("Consolas, Monaco, 'Courier New', monospace")
+        font.setPointSize(9)
+        self.log_text.setFont(font)
+        
         self.log_text.setStyleSheet("""
             QTextEdit {
                 background-color: #ffffff;

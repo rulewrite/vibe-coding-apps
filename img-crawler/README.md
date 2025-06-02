@@ -52,24 +52,48 @@
 
 ## 🛠 설치 및 실행
 
-### 1. 의존성 설치
+### 🪟 Windows 사용자
+
+1. **Python 설치**: [Python 공식 사이트](https://python.org)에서 Python 3.8+ 설치
+2. **간편 실행**: `run_windows.bat` 파일 더블클릭
+   - 자동으로 의존성 설치 및 앱 실행
+
+### 🍎 macOS / 🐧 Linux 사용자
 
 ```bash
+# 의존성 설치
 pip install -r requirements.txt
-```
 
-### 2. 앱 실행
-
-```bash
+# 앱 실행
 python main.py
 ```
 
-## 📋 시스템 요구사항
+### 📋 시스템 요구사항
 
 - **Python**: 3.8 이상
-- **운영체제**: Windows, macOS, Linux
+- **운영체제**: ✅ Windows 10/11, ✅ macOS 10.14+, ✅ Linux (Ubuntu 18.04+)
 - **RAM**: 최소 512MB (권장 1GB 이상)
 - **저장공간**: 50MB + 다운로드할 이미지 용량
+
+## 🔧 플랫폼별 참고사항
+
+### 🪟 Windows
+
+- **폰트**: Consolas (기본 설치됨)
+- **폴더 열기**: Windows 탐색기 자동 연결
+- **파일명**: Windows 예약어 자동 처리 (CON, PRN 등)
+
+### 🍎 macOS
+
+- **폰트**: Monaco (기본 설치됨)
+- **폴더 열기**: Finder 자동 연결
+- **High DPI**: Retina 디스플레이 최적화
+
+### 🐧 Linux
+
+- **폰트**: Courier New 대체
+- **폴더 열기**: xdg-open 사용
+- **의존성**: PyQt5 시스템 패키지 설치 권장
 
 ## 🎯 사용법
 

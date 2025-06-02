@@ -183,29 +183,54 @@ class ImageDownloader:
             return f"image_{index}_{int(time.time())}.jpg"
             
     def _get_file_path(self, url, filename):
-        """파일 저장 경로 생성"""
+        """파일 저장 경로 생성 (크로스 플랫폼 호환)"""
+        from pathlib import Path
+        
+        base_path = Path(self.save_path)
+        
         if self.create_subfolder:
             # 도메인별 하위 폴더 생성
             domain = urlparse(url).netloc
             domain_folder = self._sanitize_filename(domain)
-            file_path = os.path.join(self.save_path, domain_folder, filename)
+            file_path = base_path / domain_folder / filename
         else:
-            file_path = os.path.join(self.save_path, filename)
+            file_path = base_path / filename
             
-        return file_path
+        return str(file_path)
         
     def _sanitize_filename(self, filename):
-        """파일명에서 위험한 문자 제거"""
+        """파일명에서 위험한 문자 제거 (Windows 호환)"""
         import re
+        import platform
         
-        # 위험한 문자들을 언더스코어로 치환
-        sanitized = re.sub(r'[<>:"/\\|?*]', '_', filename)
+        # Windows에서 금지된 문자들 제거
+        if platform.system() == "Windows":
+            # Windows 금지 문자: < > : " | ? * / \
+            sanitized = re.sub(r'[<>:"/\\|?*]', '_', filename)
+            
+            # Windows 예약어 처리
+            reserved_names = [
+                'CON', 'PRN', 'AUX', 'NUL',
+                'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
+                'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'
+            ]
+            name, ext = os.path.splitext(sanitized)
+            if name.upper() in reserved_names:
+                name = f"_{name}"
+                sanitized = name + ext
+        else:
+            # Unix 계열 시스템 (macOS, Linux)
+            sanitized = re.sub(r'[<>:"/\\|?*]', '_', filename)
         
         # 연속된 언더스코어를 하나로 줄임
         sanitized = re.sub(r'_+', '_', sanitized)
         
-        # 앞뒤 공백 및 점 제거
-        sanitized = sanitized.strip(' .')
+        # 앞뒤 공백, 점, 언더스코어 제거
+        sanitized = sanitized.strip(' ._')
+        
+        # Windows: 파일명 끝에 점이나 공백 금지
+        if platform.system() == "Windows":
+            sanitized = sanitized.rstrip('. ')
         
         # 파일명이 너무 긴 경우 자르기 (확장자 제외하고 100자로 제한)
         name, ext = os.path.splitext(sanitized)
