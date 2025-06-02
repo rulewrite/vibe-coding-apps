@@ -91,13 +91,16 @@ class ProgressWidget(QWidget):
         self.log_text = QTextEdit()
         self.log_text.setMaximumHeight(200)
         self.log_text.setReadOnly(True)
-        self.log_text.setFont(QFont("Monaco", 9))
+        self.log_text.setFont(QFont("Monaco", 9))  # macOS의 기본 모노스페이스 폰트
         self.log_text.setStyleSheet("""
             QTextEdit {
-                background-color: #f8f9fa;
+                background-color: #ffffff;
                 border: 1px solid #dee2e6;
                 border-radius: 4px;
                 padding: 8px;
+                color: #333333;
+                selection-background-color: #007acc;
+                selection-color: white;
             }
         """)
         layout.addWidget(self.log_text)
@@ -176,6 +179,8 @@ class ProgressWidget(QWidget):
         timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
         formatted_message = f"[{timestamp}] {message}"
         
+        # 텍스트 색상을 명시적으로 설정
+        self.log_text.setTextColor(self.log_text.palette().text().color())
         self.log_text.append(formatted_message)
         
         # 자동 스크롤
