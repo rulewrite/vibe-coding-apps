@@ -45,21 +45,29 @@ class ImageThumbnailWidget(QLabel):
         try:
             if self.local_path and os.path.exists(self.local_path):
                 # 로컬 파일에서 로드
+                print(f"썸네일 로딩 시도: {self.local_path}")  # 디버깅용
                 pixmap = QPixmap(self.local_path)
-            else:
-                # URL에서 로드 (간단한 경우만)
-                self.setText("🖼️\n클릭하여\n원본 보기")
-                return
                 
-            if not pixmap.isNull():
-                # 비율 유지하며 크기 조정
-                scaled_pixmap = pixmap.scaled(140, 140, 
-                                            Qt.KeepAspectRatio,
-                                            Qt.SmoothTransformation)
-                self.setPixmap(scaled_pixmap)
+                if not pixmap.isNull():
+                    # 비율 유지하며 크기 조정
+                    scaled_pixmap = pixmap.scaled(140, 140, 
+                                                Qt.KeepAspectRatio,
+                                                Qt.SmoothTransformation)
+                    self.setPixmap(scaled_pixmap)
+                    print(f"썸네일 로딩 성공: {self.local_path}")  # 디버깅용
+                else:
+                    print(f"Pixmap 로딩 실패: {self.local_path}")  # 디버깅용
+                    self.setText("❌\n로드 실패")
             else:
-                self.setText("❌\n로드 실패")
+                # 파일이 없거나 경로가 없는 경우
+                if self.local_path:
+                    print(f"파일 없음: {self.local_path}")  # 디버깅용
+                else:
+                    print(f"경로 없음. URL: {self.image_url}")  # 디버깅용
+                self.setText("🖼️\n다운로드\n대기중")
+                
         except Exception as e:
+            print(f"썸네일 로딩 오류: {e}")  # 디버깅용
             self.setText("❌\n로드 실패")
             
     def mousePressEvent(self, event):
@@ -241,15 +249,21 @@ class PreviewWidget(QWidget):
         
     def refresh_thumbnails(self):
         """썸네일 새로고침"""
+        print(f"썸네일 새로고침 시작. 이미지 데이터 개수: {len(self.images_data)}")  # 디버깅용
+        
         # 기존 썸네일 제거
         for i in reversed(range(self.grid_layout.count())):
-            self.grid_layout.itemAt(i).widget().setParent(None)
+            child = self.grid_layout.itemAt(i).widget()
+            if child:
+                child.setParent(None)
             
         # 새 썸네일 추가
         columns = 4  # 한 행당 이미지 수
         for i, image_data in enumerate(self.images_data):
             row = i // columns
             col = i % columns
+            
+            print(f"썸네일 {i+1} 생성 중: {image_data}")  # 디버깅용
             
             thumbnail = ImageThumbnailWidget(
                 image_data.get('url', ''),
@@ -258,7 +272,9 @@ class PreviewWidget(QWidget):
             thumbnail.clicked.connect(self.on_thumbnail_clicked)
             
             self.grid_layout.addWidget(thumbnail, row, col)
-            
+        
+        print(f"썸네일 새로고침 완료")  # 디버깅용
+        
     def update_image_count(self):
         """이미지 개수 업데이트"""
         count = len(self.images_data)
@@ -272,6 +288,26 @@ class PreviewWidget(QWidget):
         
     def show_results(self, results):
         """크롤링 결과 표시"""
+        # 다운로드된 이미지들을 미리보기에 추가
+        downloaded_images = []
+        for result in results:
+            if result.get('success', False) and result.get('local_path'):
+                # 다운로드 결과를 이미지 데이터 형식으로 변환
+                image_data = {
+                    'url': result.get('url', ''),
+                    'local_path': result.get('local_path', ''),
+                    'filename': result.get('filename', ''),
+                    'size': result.get('size', 0)
+                }
+                downloaded_images.append(image_data)
+        
+        # 기존 이미지 데이터를 다운로드된 것들로 교체
+        if downloaded_images:
+            self.images_data = downloaded_images
+            self.update_image_count()
+            self.refresh_thumbnails()
+        
+        # 결과 테이블과 통계 업데이트
         self.populate_results_table(results)
         self.update_statistics(results)
         
