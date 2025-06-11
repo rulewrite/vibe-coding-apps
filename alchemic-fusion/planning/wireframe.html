@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>알케믹 퓨전 - 와이어프레임</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #1a1a2e;
+            color: #e0e0e0;
+        }
+        .wireframe-container {
+            border: 2px solid #4a4a70;
+            background-color: #16213e;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px auto;
+            max-width: 1200px;
+        }
+        .wireframe-title {
+            color: #fca311;
+            font-weight: 700;
+            font-size: 2rem;
+            border-bottom: 2px solid #4a4a70;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .panel {
+            background-color: #0f3460;
+            border: 1px solid #4a4a70;
+            border-radius: 8px;
+            padding: 16px;
+            height: 100%;
+        }
+        .panel-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #e94560;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #4a4a70;
+            padding-bottom: 0.5rem;
+        }
+        .flask {
+            border-radius: 50%;
+            border: 4px dashed #fca311;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.05);
+            aspect-ratio: 1 / 1;
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .element-icon {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #a6a6a6;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .element-icon:hover {
+            border-color: #fca311;
+            transform: scale(1.1);
+        }
+        .element-fire { background-color: #ff4848; color: white; }
+        .element-water { background-color: #48a2ff; color: white; }
+        .element-nature { background-color: #32ff7e; color: black; }
+        .element-earth { background-color: #8b5a2b; color: white; }
+        .element-metal { background-color: #bdc3c7; color: black; }
+        .element-wind { background-color: #d1d8e0; color: black; }
+
+        .btn {
+            background-color: #fca311;
+            color: #16213e;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-align: center;
+        }
+        .btn:hover {
+            background-color: #ffc107;
+        }
+        .btn-main {
+            font-size: 1.5rem;
+            padding: 16px 32px;
+        }
+        .log-item {
+            font-size: 0.9rem;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(74, 74, 112, 0.5);
+        }
+        .result-modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .result-content {
+            background-color: #16213e;
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid #fca311;
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body class="p-4">
+
+    <!-- 1. 대기 화면 와이어프레임 -->
+    <div class="wireframe-container">
+        <h2 class="wireframe-title">1. 대기 화면: "실험 준비"</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- 좌측 패널: 참가자 등록 -->
+            <div class="panel">
+                <h3 class="panel-title">참가자 등록</h3>
+                <div class="space-y-4">
+                    <input type="text" placeholder="이름을 입력하세요..." class="w-full p-2 rounded bg-gray-700 border border-gray-600 focus:outline-none focus:border-fca311">
+                    <p class="text-sm text-gray-400">원소를 선택하세요:</p>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="element-icon element-fire">火</div>
+                        <div class="element-icon element-water">水</div>
+                        <div class="element-icon element-nature">木</div>
+                        <div class="element-icon element-earth">土</div>
+                        <div class="element-icon element-metal">金</div>
+                        <div class="element-icon element-wind">風</div>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="random-check" class="mr-2">
+                        <label for="random-check" class="text-sm">랜덤 선택</label>
+                    </div>
+                    <div class="btn">참가하기</div>
+                </div>
+            </div>
+            <!-- 중앙: 플라스크 -->
+            <div class="flex flex-col items-center justify-center space-y-4">
+                <div class="w-full flask">
+                    <span>유리 플라스크</span>
+                </div>
+                <div class="btn btn-main">[실험 시작!]</div>
+            </div>
+            <!-- 우측 패널: 참가자 목록 -->
+            <div class="panel">
+                <h3 class="panel-title">참가자 목록</h3>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between p-2 bg-gray-700/50 rounded">
+                        <span>천재기획자</span>
+                        <div class="element-icon element-fire w-8 h-8 text-sm">火</div>
+                    </div>
+                    <div class="flex items-center justify-between p-2 bg-gray-700/50 rounded">
+                        <span>대표님</span>
+                        <div class="element-icon element-water w-8 h-8 text-sm">水</div>
+                    </div>
+                    <!-- 추가 참가자 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 게임 진행 화면 와이어프레임 -->
+    <div class="wireframe-container">
+        <h2 class="wireframe-title">2. 게임 진행 화면: "연금술의 향연"</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <!-- 좌측 패널: 실시간 전황판 -->
+            <div class="panel md:col-span-1">
+                <h3 class="panel-title">실시간 전황판</h3>
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="font-bold">생존자</h4>
+                        <p class="text-lg">6 / 8</p>
+                    </div>
+                    <div>
+                        <h4 class="font-bold">최고의 연금술사</h4>
+                        <ol class="list-decimal list-inside text-sm space-y-1">
+                            <li>천재기획자 (85점)</li>
+                            <li>게이머1 (60점)</li>
+                            <li>게이머2 (55점)</li>
+                        </ol>
+                    </div>
+                    <div>
+                        <h4 class="font-bold">현자의 돌 후보</h4>
+                        <p class="text-sm">대표님 (1 반응)</p>
+                    </div>
+                </div>
+            </div>
+            <!-- 중앙: 플라스크 (게임 진행) -->
+            <div class="panel md:col-span-2 flex items-center justify-center">
+                <div class="w-full flask relative">
+                    <!-- 게임 진행 중인 원소들 예시 -->
+                    <div class="element-icon element-fire absolute" style="top: 20%; left: 30%;">火</div>
+                    <div class="element-icon element-water absolute" style="top: 30%; left: 60%;">水</div>
+                    <div class="element-icon element-nature absolute" style="bottom: 25%; left: 45%;">木</div>
+                    <span class="opacity-50">반응 시각 효과 (VFX)</span>
+                </div>
+            </div>
+            <!-- 우측 패널: 이벤트 로그 -->
+            <div class="panel md:col-span-1">
+                <h3 class="panel-title">이벤트 로그</h3>
+                <div class="space-y-1 max-h-96 overflow-y-auto">
+                    <p class="log-item"><span class="text-red-400">[소멸]</span> 물이 불을 소멸시킴</p>
+                    <p class="log-item"><span class="text-green-400">[상생]</span> 바람이 나무를 강화</p>
+                    <p class="log-item"><span class="text-yellow-400">[시스템]</span> 중립 흙 원소 2개 투입</p>
+                    <p class="log-item"><span class="text-purple-400">[조합]</span> 불과 물이 만나 증기 폭발!</p>
+                     <!-- ...로그들 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 결과 화면 와이어프레임 (예시로 버튼을 누르면 보이게 설정) -->
+    <div class="text-center my-8">
+        <button onclick="document.getElementById('resultScreen').style.display='flex'" class="btn">결과 화면 보기 (예시)</button>
+    </div>
+
+    <div id="resultScreen" class="result-modal" style="display: none;">
+        <div class="result-content space-y-6">
+            <h2 class="wireframe-title">3. 결과 화면: "전설의 탄생"</h2>
+            <div class="space-y-4">
+                <div class="p-4 bg-yellow-900/50 border border-yellow-700 rounded-lg">
+                    <h3 class="text-yellow-400 text-xl font-bold">🏆 최후의 생존자 🏆</h3>
+                    <p class="text-2xl mt-1">대표님 (水)</p>
+                </div>
+                <div class="p-4 bg-purple-900/50 border border-purple-700 rounded-lg">
+                    <h3 class="text-purple-400 text-xl font-bold">✨ 최고의 연금술사 ✨</h3>
+                    <p class="text-2xl mt-1">천재기획자 (火)</p>
+                </div>
+                 <div class="p-4 bg-gray-600/50 border border-gray-500 rounded-lg">
+                    <h3 class="text-gray-300 text-xl font-bold">💎 현자의 돌 💎</h3>
+                    <p class="text-2xl mt-1">게이머3 (土)</p>
+                </div>
+            </div>
+            <div class="flex justify-center gap-4 mt-8">
+                <div class="btn">다시 실험하기</div>
+                <div class="btn bg-blue-500 text-white">결과 공유하기</div>
+            </div>
+             <button onclick="document.getElementById('resultScreen').style.display='none'" class="absolute top-4 right-4 text-2xl">&times;</button>
+        </div>
+    </div>
+
+</body>
+</html>
