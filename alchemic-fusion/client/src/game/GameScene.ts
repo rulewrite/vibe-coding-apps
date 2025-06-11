@@ -28,6 +28,10 @@ export class GameScene extends Phaser.Scene {
     // Matter.js 물리 엔진 활성화
     this.matter.world.setBounds(0, 0, this.scale.width, this.scale.height);
 
+    // 중력 설정
+    this.matter.world.engine.world.gravity.y = 0.5;
+    this.matter.world.engine.world.gravity.x = 0;
+
     // 게임 스토어 참조
     this.gameStore = useGameStore.getState();
 
@@ -49,6 +53,9 @@ export class GameScene extends Phaser.Scene {
 
     // 파티클 시스템 초기화
     this.createParticleSystems();
+
+    // 원소 간 상호작용 타이머 시작
+    this.startElementInteractionSystem();
   }
 
   update() {
@@ -97,6 +104,11 @@ export class GameScene extends Phaser.Scene {
       shape: 'circle',
     });
 
+    // 초기 속도 적용 (무작위 방향으로 약간의 힘)
+    const initialVelocityX = (Math.random() - 0.5) * 4;
+    const initialVelocityY = Math.random() * 2;
+    sprite.setVelocity(initialVelocityX, initialVelocityY);
+
     // 스프라이트에 게임 정보 저장
     sprite.setData('elementId', `element-${player.id}`);
     sprite.setData('playerId', player.id);
@@ -131,6 +143,11 @@ export class GameScene extends Phaser.Scene {
       shape: 'circle',
     });
 
+    // 초기 속도 적용
+    const initialVelocityX = (Math.random() - 0.5) * 6;
+    const initialVelocityY = Math.random() * 3;
+    sprite.setVelocity(initialVelocityX, initialVelocityY);
+
     sprite.setData('elementId', elementId);
     sprite.setData('elementType', elementType);
     sprite.setData('health', 100);
@@ -145,7 +162,7 @@ export class GameScene extends Phaser.Scene {
       type: elementType,
       isNeutral: true,
       position: { x, y },
-      velocity: { x: 0, y: 0 },
+      velocity: { x: initialVelocityX, y: initialVelocityY },
       health: 100,
       maxHealth: 100,
       physics: config.physics,
@@ -532,5 +549,129 @@ export class GameScene extends Phaser.Scene {
     graphics.fillCircle(2, 2, 2);
     graphics.generateTexture('spark', 4, 4);
     graphics.destroy();
+  }
+
+  private startElementInteractionSystem() {
+    // 원소 간 상호작용 타이머 (매 100ms마다 실행)
+    this.time.addEvent({
+      delay: 100,
+      callback: this.applyElementInteractions,
+      callbackScope: this,
+      loop: true,
+    });
+  }
+
+  private applyElementInteractions() {
+    const elementSprites = Array.from(this.elements.values());
+
+    elementSprites.forEach((spriteA, indexA) => {
+      elementSprites.forEach((spriteB, indexB) => {
+        if (indexA >= indexB) return; // 중복 계산 방지
+
+        const elementA = spriteA.getData('elementType') as ElementType;
+        const elementB = spriteB.getData('elementType') as ElementType;
+
+        if (!elementA || !elementB) return;
+
+        const distance = Phaser.Math.Distance.Between(
+          spriteA.x,
+          spriteA.y,
+          spriteB.x,
+          spriteB.y
+        );
+
+        // 거리 기반 상호작용 (가까우면 더 강한 힘)
+        if (distance < 150) {
+          this.applyElementForces(
+            spriteA,
+            spriteB,
+            elementA,
+            elementB,
+            distance
+          );
+        }
+      });
+    });
+  }
+
+  private applyElementForces(
+    spriteA: Phaser.Physics.Matter.Sprite,
+    spriteB: Phaser.Physics.Matter.Sprite,
+    elementA: ElementType,
+    elementB: ElementType,
+    distance: number
+  ) {
+    // body null 체크
+    if (!spriteA.body || !spriteB.body) return;
+
+    // 원소 간 상성에 따른 힘 계산
+    const reactionEntries = Object.entries(ELEMENT_REACTIONS);
+    const reactionEntry = reactionEntries.find(
+      ([_, r]: [string, any]) =>
+        r.elements.includes(elementA) && r.elements.includes(elementB)
+    );
+    const reaction = reactionEntry ? reactionEntry[1] : null;
+
+    const forceMultiplier = reaction ? 0.0008 : 0.0003;
+    const force = forceMultiplier / (distance * distance + 1);
+
+    // 방향 벡터 계산
+    const angle = Phaser.Math.Angle.Between(
+      spriteA.x,
+      spriteA.y,
+      spriteB.x,
+      spriteB.y
+    );
+
+    let forceX = Math.cos(angle) * force;
+    let forceY = Math.sin(angle) * force;
+
+    // 상성에 따른 인력/척력 결정 - setVelocity로 대체
+    if (reaction) {
+      // 반응이 있는 원소들은 서로 끌어당김
+      const currentVelA = spriteA.body.velocity;
+      const currentVelB = spriteB.body.velocity;
+
+      spriteA.setVelocity(
+        currentVelA.x + forceX * 10,
+        currentVelA.y + forceY * 10
+      );
+      spriteB.setVelocity(
+        currentVelB.x - forceX * 10,
+        currentVelB.y - forceY * 10
+      );
+    } else {
+      // 반응이 없는 원소들은 약하게 밀어냄
+      forceX *= 0.3;
+      forceY *= 0.3;
+      const currentVelA = spriteA.body.velocity;
+      const currentVelB = spriteB.body.velocity;
+
+      spriteA.setVelocity(
+        currentVelA.x - forceX * 10,
+        currentVelA.y - forceY * 10
+      );
+      spriteB.setVelocity(
+        currentVelB.x + forceX * 10,
+        currentVelB.y + forceY * 10
+      );
+    }
+
+    // 주기적으로 무작위 힘 적용 (역동성 증가)
+    if (Math.random() < 0.02) {
+      const randomForceX = (Math.random() - 0.5) * 2;
+      const randomForceY = (Math.random() - 0.5) * 2;
+      const currentVelA = spriteA.body.velocity;
+      const currentVelB = spriteB.body.velocity;
+
+      spriteA.setVelocity(
+        currentVelA.x + randomForceX,
+        currentVelA.y + randomForceY
+      );
+      spriteB.setVelocity(
+        currentVelB.x - randomForceX,
+        currentVelB.y - randomForceY
+      );
+    }
   }
 }
