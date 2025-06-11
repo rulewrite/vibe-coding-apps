@@ -1,0 +1,56 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  font-family: 'Cinzel', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+    'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%);
+  min-height: 100vh;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* 마법사 실험실 테마 스타일 */
+.mystical-bg {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(128, 84, 255, 0.1) 0%,
+    rgba(30, 27, 75, 0.9) 70%
+  );
+}
+
+.parchment {
+  background: linear-gradient(45deg, #f4f1e8 0%, #e8dcc0 100%);
+  border: 2px solid #8b6914;
+  box-shadow: inset 0 2px 4px rgba(139, 105, 20, 0.1);
+}
+
+.flask {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(128, 84, 255, 0.1) 100%
+  );
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50% 50% 20% 20%;
+}
+
+.rune-icon {
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 0 5px rgba(128, 84, 255, 0.3));
+}
+
+.rune-icon:hover {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 15px rgba(128, 84, 255, 0.8));
+}
