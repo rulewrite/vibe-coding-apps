@@ -46,7 +46,7 @@ export const ResultScreen: React.FC = () => {
     }, 3000); // 각 발표는 3초간 지속
 
     return () => clearTimeout(timer);
-  }, [currentAnnouncement]);
+  }, [currentAnnouncement, announcements.length]);
 
   const getPlayerInfo = (playerId?: string) => {
     if (!playerId) return null;
@@ -265,7 +265,7 @@ export const ResultScreen: React.FC = () => {
         </div>
 
         {/* 승리자 요약 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md-grid-cols-3 gap-6 mb-12">
           {announcements.map((announcement, index) => {
             const winnerInfo = getPlayerInfo(announcement.winnerId);
 

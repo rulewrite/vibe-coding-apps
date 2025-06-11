@@ -57,10 +57,10 @@ export const WaitingRoom: React.FC = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg-grid-cols-3 gap-8">
           {/* 중앙 플라스크 */}
           <motion.div
-            className="lg:col-start-2 flex justify-center"
+            className="lg-col-start-2 flex justify-center"
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ duration: 1, delay: 0.3 }}
@@ -80,7 +80,7 @@ export const WaitingRoom: React.FC = () => {
 
           {/* 좌측 패널 - 플레이어 등록 */}
           <motion.div
-            className="parchment p-6 rounded-lg lg:col-start-1 lg:row-start-1"
+            className="parchment p-6 rounded-lg lg-col-start-1 lg-row-start-1"
             initial={{ opacity: 0, x: -100 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
@@ -174,7 +174,7 @@ export const WaitingRoom: React.FC = () => {
 
           {/* 우측 패널 - 참가자 목록 */}
           <motion.div
-            className="parchment p-6 rounded-lg lg:col-start-3 lg:row-start-1"
+            className="parchment p-6 rounded-lg lg-col-start-3 lg-row-start-1"
             initial={{ opacity: 0, x: 100 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.7 }}

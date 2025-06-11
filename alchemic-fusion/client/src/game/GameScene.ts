@@ -3,6 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import {
   ELEMENT_CONFIG,
   ELEMENT_REACTIONS,
+  ElementType,
   GameElement,
   Reaction,
 } from '../types/game';
@@ -26,7 +27,6 @@ export class GameScene extends Phaser.Scene {
   create() {
     // Matter.js 물리 엔진 활성화
     this.matter.world.setBounds(0, 0, this.scale.width, this.scale.height);
-    this.matter.world.runner.isFixed = false;
 
     // 게임 스토어 참조
     this.gameStore = useGameStore.getState();
@@ -78,7 +78,10 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private createPlayerElement(player: any, index: number) {
+  private createPlayerElement(
+    player: { id: string; element: ElementType; name: string },
+    index: number
+  ) {
     const config = ELEMENT_CONFIG[player.element];
 
     // 초기 위치 (플라스크 상단에서 떨어뜨림)
@@ -108,8 +111,8 @@ export class GameScene extends Phaser.Scene {
     this.addElementEffects(sprite, player.element);
   }
 
-  private createNeutralElement(elementType: string) {
-    const config = ELEMENT_CONFIG[elementType as keyof typeof ELEMENT_CONFIG];
+  private createNeutralElement(elementType: ElementType) {
+    const config = ELEMENT_CONFIG[elementType];
     if (!config) return;
 
     // 무작위 위치에서 생성
@@ -139,7 +142,7 @@ export class GameScene extends Phaser.Scene {
     // 게임 스토어에 추가
     const gameElement: GameElement = {
       id: elementId,
-      type: elementType as any,
+      type: elementType,
       isNeutral: true,
       position: { x, y },
       velocity: { x: 0, y: 0 },
@@ -154,9 +157,9 @@ export class GameScene extends Phaser.Scene {
 
   private addElementEffects(
     sprite: Phaser.Physics.Matter.Sprite,
-    elementType: string
+    elementType: ElementType
   ) {
-    const config = ELEMENT_CONFIG[elementType as keyof typeof ELEMENT_CONFIG];
+    const config = ELEMENT_CONFIG[elementType];
 
     // 글로우 효과
     sprite.setTint(parseInt(config.color.replace('#', '0x')));
@@ -184,7 +187,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private addNeutralElements() {
-    const allElementTypes = Object.keys(ELEMENT_CONFIG);
+    const allElementTypes = Object.keys(ELEMENT_CONFIG) as ElementType[];
     const playerElements = this.gameStore.players.map((p: any) => p.element);
     const unusedElements = allElementTypes.filter(
       (type) => !playerElements.includes(type)
@@ -342,10 +345,13 @@ export class GameScene extends Phaser.Scene {
           sprite.x,
           sprite.y
         );
-        sprite.applyForce({
-          x: Math.cos(angle) * force,
-          y: Math.sin(angle) * force,
-        });
+
+        // 올바른 벡터 형식으로 힘 적용
+        const forceVector = new Phaser.Math.Vector2(
+          Math.cos(angle) * force,
+          Math.sin(angle) * force
+        );
+        sprite.applyForce(forceVector);
       }
     });
 
