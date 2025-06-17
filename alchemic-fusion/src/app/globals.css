@@ -1,26 +1,51 @@
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+  color: #e0e6ed;
+  overflow-x: hidden;
+}
+
+/* 연금술사 테마 기본 스타일 */
+:root {
+  --alchemy-primary: #8b5cf6;
+  --alchemy-secondary: #06b6d4;
+  --alchemy-accent: #f59e0b;
+  --alchemy-fire: #ef4444;
+  --alchemy-water: #3b82f6;
+  --alchemy-wood: #10b981;
+  --alchemy-metal: #6b7280;
+  --alchemy-earth: #a3a3a3;
+  --alchemy-wind: #e5e7eb;
+  --alchemy-bg-dark: #0f0f23;
+  --alchemy-bg-medium: #16213e;
+  --alchemy-bg-light: #1a1a2e;
+}
+
+/* 스크롤바 스타일링 */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--alchemy-bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--alchemy-primary);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--alchemy-secondary);
 }
