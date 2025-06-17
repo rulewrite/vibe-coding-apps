@@ -1,7 +1,9 @@
 'use client';
 
+import { Participant, useGameStore } from '@/lib/game-store';
 import { ElementType } from '@/styles/theme';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import styled from 'styled-components';
 
@@ -323,11 +325,6 @@ const StartButton = styled(motion.button)<{ disabled?: boolean }>`
 `;
 
 // 타입 정의
-interface Participant {
-  name: string;
-  element: ElementType;
-}
-
 const elements: { key: ElementType; symbol: string; name: string }[] = [
   { key: 'fire', symbol: '🔥', name: '불' },
   { key: 'water', symbol: '💧', name: '물' },
@@ -338,7 +335,9 @@ const elements: { key: ElementType; symbol: string; name: string }[] = [
 ];
 
 export default function Home() {
-  const [participants, setParticipants] = useState<Participant[]>([]);
+  const router = useRouter();
+  const { participants, setParticipants, resetGame } = useGameStore();
+
   const [playerName, setPlayerName] = useState('');
   const [selectedElement, setSelectedElement] = useState<ElementType>('fire');
   const [useRandom, setUseRandom] = useState(false);
@@ -350,13 +349,26 @@ export default function Home() {
       ? elements[Math.floor(Math.random() * elements.length)].key
       : selectedElement;
 
-    setParticipants((prev) => [...prev, { name: playerName.trim(), element }]);
+    const newParticipant: Participant = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      name: playerName.trim(),
+      element,
+    };
+
+    const newParticipants = [...participants, newParticipant];
+    setParticipants(newParticipants);
     setPlayerName('');
   };
 
   const handleStartGame = () => {
-    // TODO: 게임 시작 로직
-    console.log('게임 시작!', participants);
+    if (participants.length < 2) return;
+
+    // 게임 페이지로 이동
+    router.push('/game');
+  };
+
+  const handleResetGame = () => {
+    resetGame();
   };
 
   return (
@@ -425,6 +437,20 @@ export default function Home() {
           >
             참가하기
           </ActionButton>
+
+          {participants.length > 0 && (
+            <ActionButton
+              onClick={handleResetGame}
+              style={{
+                background: 'rgba(239, 68, 68, 0.8)',
+                marginTop: '0.5rem',
+              }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              모두 초기화
+            </ActionButton>
+          )}
         </LeftPanel>
 
         {/* 중앙 - 연금술 플라스크 */}
@@ -456,13 +482,13 @@ export default function Home() {
                 아직 참가자가 없습니다
               </p>
             ) : (
-              participants.map((participant, index) => {
+              participants.map((participant) => {
                 const elementInfo = elements.find(
                   (e) => e.key === participant.element
                 );
                 return (
                   <ParticipantItem
-                    key={index}
+                    key={participant.id}
                     element={participant.element}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
