@@ -156,6 +156,7 @@ export default function GamePage() {
   const physicsEngineRef = useRef<PhysicsEngine | null>(null);
   const gameLoopRef = useRef<number | null>(null);
   const lastNeutralSpawnRef = useRef<number>(0);
+  const recentCollisionsRef = useRef<Set<string>>(new Set());
 
   const {
     players,
@@ -188,6 +189,8 @@ export default function GamePage() {
     engine.initializeCanvas(canvas);
     engine.start();
 
+    console.log('게임 초기화 완료, 플레이어 수:', players.length);
+
     // 플레이어 원소들을 순차적으로 투입
     players.forEach((player, index) => {
       setTimeout(() => {
@@ -204,6 +207,7 @@ export default function GamePage() {
           alchemyPoints: 0,
         };
 
+        console.log('원소 투입:', player.name, player.element);
         addElement(elementInstance);
         engine.addElement(elementInstance);
 
@@ -233,6 +237,8 @@ export default function GamePage() {
   useEffect(() => {
     if (phase !== 'playing' || !startTime) return;
 
+    let frameCount = 0;
+
     const gameLoop = () => {
       const now = Date.now();
       const elapsed = (now - startTime) / 1000;
@@ -247,18 +253,40 @@ export default function GamePage() {
         return;
       }
 
+      // 매 프레임마다 충돌 검사 (더 자주)
+      frameCount++;
+      if (frameCount % 5 === 0 && physicsEngineRef.current) {
+        const collisions = physicsEngineRef.current.checkCollisions();
+
+        if (collisions.length > 0) {
+          console.log('이번 프레임 충돌 수:', collisions.length);
+        }
+
+        collisions.forEach((collision) => {
+          const collisionKey = `${collision.element1Id}-${collision.element2Id}`;
+          const reverseKey = `${collision.element2Id}-${collision.element1Id}`;
+
+          // 중복 충돌 방지 (1초 간격)
+          if (
+            !recentCollisionsRef.current.has(collisionKey) &&
+            !recentCollisionsRef.current.has(reverseKey)
+          ) {
+            recentCollisionsRef.current.add(collisionKey);
+
+            // 1초 후 충돌 기록 제거
+            setTimeout(() => {
+              recentCollisionsRef.current.delete(collisionKey);
+            }, 1000);
+
+            handleElementCollision(collision.element1Id, collision.element2Id);
+          }
+        });
+      }
+
       // 중립 원소 보충 (20초마다)
       if (now - lastNeutralSpawnRef.current > 20000) {
         spawnNeutralElement();
         lastNeutralSpawnRef.current = now;
-      }
-
-      // 충돌 검사 및 반응 처리
-      if (physicsEngineRef.current) {
-        const collisions = physicsEngineRef.current.checkCollisions();
-        collisions.forEach((collision) => {
-          handleElementCollision(collision.element1Id, collision.element2Id);
-        });
       }
 
       gameLoopRef.current = requestAnimationFrame(gameLoop);
@@ -271,7 +299,7 @@ export default function GamePage() {
         cancelAnimationFrame(gameLoopRef.current);
       }
     };
-  }, [phase, startTime, duration]);
+  }, [phase, startTime, duration, elements]);
 
   const spawnNeutralElement = () => {
     if (!physicsEngineRef.current) return;
@@ -308,15 +336,36 @@ export default function GamePage() {
     const element1 = elements.find((e) => e.id === element1Id);
     const element2 = elements.find((e) => e.id === element2Id);
 
-    if (!element1 || !element2) return;
+    console.log('충돌 처리 시도:', element1Id, element2Id);
+    console.log('찾은 원소들:', element1?.element, element2?.element);
+
+    if (!element1 || !element2) {
+      console.log('원소를 찾을 수 없음:', { element1, element2 });
+      return;
+    }
 
     const reaction = getElementReaction(element1.element, element2.element);
-    if (!reaction) return;
+    console.log('반응 결과:', reaction);
+
+    if (!reaction) {
+      console.log('반응 없음:', element1.element, 'vs', element2.element);
+      return;
+    }
+
+    console.log(
+      `🔥 반응 발생! ${ELEMENT_NAMES[element1.element]} vs ${
+        ELEMENT_NAMES[element2.element]
+      } = ${reaction.type}`
+    );
 
     // 반응 처리
     switch (reaction.effect) {
       case 'destroy':
+        console.log('소멸 반응 처리 중...');
         if (reaction.from === element1.element) {
+          console.log(
+            `${element2.element} 소멸, ${element1.element}이 ${reaction.points}점 획득`
+          );
           removeElement(element2.id);
           physicsEngineRef.current?.removeElement(element2.id);
           updateElement(element1.id, {
@@ -324,6 +373,9 @@ export default function GamePage() {
             reactionCount: element1.reactionCount + 1,
           });
         } else {
+          console.log(
+            `${element1.element} 소멸, ${element2.element}이 ${reaction.points}점 획득`
+          );
           removeElement(element1.id);
           physicsEngineRef.current?.removeElement(element1.id);
           updateElement(element2.id, {
@@ -334,11 +386,15 @@ export default function GamePage() {
         break;
 
       case 'weaken':
+        console.log('약화 반응 처리 중...');
         const targetElement =
           reaction.from === element1.element ? element2 : element1;
         const sourceElement =
           reaction.from === element1.element ? element1 : element2;
 
+        console.log(
+          `${targetElement.element} 약화, ${sourceElement.element}이 ${reaction.points}점 획득`
+        );
         updateElement(targetElement.id, {
           health: Math.max(0, targetElement.health - 30),
           reactionCount: targetElement.reactionCount + 1,
@@ -350,11 +406,15 @@ export default function GamePage() {
         break;
 
       case 'strengthen':
+        console.log('강화 반응 처리 중...');
         const enhancedElement =
           reaction.to === element1.element ? element1 : element2;
         const enhancerElement =
           reaction.from === element1.element ? element1 : element2;
 
+        console.log(
+          `${enhancedElement.element} 강화, ${enhancerElement.element}이 ${reaction.points}점 획득`
+        );
         updateElement(enhancedElement.id, {
           health: Math.min(
             enhancedElement.maxHealth,
@@ -368,7 +428,22 @@ export default function GamePage() {
         });
         break;
 
+      case 'mutual_weaken':
+        console.log('상호 약화 반응 처리 중...');
+        updateElement(element1.id, {
+          health: Math.max(0, element1.health - 20),
+          alchemyPoints: element1.alchemyPoints + reaction.points,
+          reactionCount: element1.reactionCount + 1,
+        });
+        updateElement(element2.id, {
+          health: Math.max(0, element2.health - 20),
+          alchemyPoints: element2.alchemyPoints + reaction.points,
+          reactionCount: element2.reactionCount + 1,
+        });
+        break;
+
       case 'combine':
+        console.log('조합 반응 처리 중... (증기화)');
         // 증기화 반응
         if (physicsEngineRef.current) {
           const midX = (element1.x + element2.x) / 2;
@@ -389,10 +464,12 @@ export default function GamePage() {
             alchemyPoints: 0,
           };
 
+          console.log('바람 원소 생성!');
           addElement(windElement);
           physicsEngineRef.current.addElement(windElement);
         }
 
+        console.log('원본 원소들 제거');
         removeElement(element1.id);
         removeElement(element2.id);
         physicsEngineRef.current?.removeElement(element1.id);

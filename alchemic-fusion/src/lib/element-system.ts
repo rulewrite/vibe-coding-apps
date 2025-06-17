@@ -143,14 +143,24 @@ export function getElementReaction(
   element1: ElementType,
   element2: ElementType
 ): Reaction | null {
+  console.log(`반응 검사: ${element1} vs ${element2}`);
+
   // 상생 관계 확인
   const synergyKey1 = `${element1}->${element2}`;
   const synergyKey2 = `${element2}->${element1}`;
 
   if (SYNERGY_REACTIONS[synergyKey1]) {
+    console.log(
+      `상생 반응 발견: ${synergyKey1}`,
+      SYNERGY_REACTIONS[synergyKey1]
+    );
     return SYNERGY_REACTIONS[synergyKey1];
   }
   if (SYNERGY_REACTIONS[synergyKey2]) {
+    console.log(
+      `상생 반응 발견: ${synergyKey2}`,
+      SYNERGY_REACTIONS[synergyKey2]
+    );
     return SYNERGY_REACTIONS[synergyKey2];
   }
 
@@ -159,9 +169,17 @@ export function getElementReaction(
   const conflictKey2 = `${element2}->${element1}`;
 
   if (CONFLICT_REACTIONS[conflictKey1]) {
+    console.log(
+      `상극 반응 발견: ${conflictKey1}`,
+      CONFLICT_REACTIONS[conflictKey1]
+    );
     return CONFLICT_REACTIONS[conflictKey1];
   }
   if (CONFLICT_REACTIONS[conflictKey2]) {
+    console.log(
+      `상극 반응 발견: ${conflictKey2}`,
+      CONFLICT_REACTIONS[conflictKey2]
+    );
     return CONFLICT_REACTIONS[conflictKey2];
   }
 
@@ -170,12 +188,15 @@ export function getElementReaction(
   const combKey2 = `${element2}+${element1}`;
 
   if (COMBINATION_REACTIONS[combKey1]) {
+    console.log(`조합 반응 발견: ${combKey1}`, COMBINATION_REACTIONS[combKey1]);
     return COMBINATION_REACTIONS[combKey1];
   }
   if (COMBINATION_REACTIONS[combKey2]) {
+    console.log(`조합 반응 발견: ${combKey2}`, COMBINATION_REACTIONS[combKey2]);
     return COMBINATION_REACTIONS[combKey2];
   }
 
+  console.log(`반응 없음: ${element1} vs ${element2}`);
   return null;
 }
 

@@ -98,6 +98,10 @@ export class PhysicsEngine {
     const x = this.FLASK_WIDTH / 2 + (Math.random() - 0.5) * 100;
     const y = 50;
 
+    console.log(
+      `원소 생성: ${element.element} (${element.id}) at (${x}, ${y})`
+    );
+
     const body = Matter.Bodies.circle(x, y, this.ELEMENT_SIZE, {
       density: physics.density,
       friction: physics.friction,
@@ -113,6 +117,10 @@ export class PhysicsEngine {
 
     Matter.World.add(this.world, body);
     this.bodies.set(element.id, body);
+
+    console.log(
+      `물리 바디 추가 완료: ${element.id}, 총 바디 수: ${this.bodies.size}`
+    );
 
     return body;
   }
@@ -143,6 +151,8 @@ export class PhysicsEngine {
     // 현재 프레임에서 충돌 검사를 위해 간단한 거리 기반 검사 사용
     const elementBodies = Array.from(this.bodies.entries());
 
+    if (elementBodies.length < 2) return collisions;
+
     for (let i = 0; i < elementBodies.length; i++) {
       for (let j = i + 1; j < elementBodies.length; j++) {
         const [id1, body1] = elementBodies[i];
@@ -153,12 +163,19 @@ export class PhysicsEngine {
             Math.pow(body1.position.y - body2.position.y, 2)
         );
 
-        // 두 원소가 접촉하거나 겹칠 때
-        if (distance < this.ELEMENT_SIZE * 2.2) {
+        // 두 원소가 접촉하거나 겹칠 때 (충돌 범위를 넓힘)
+        const collisionDistance = this.ELEMENT_SIZE * 2.5; // 더 넓은 충돌 범위
+
+        if (distance < collisionDistance) {
           collisions.push({
             element1Id: id1,
             element2Id: id2,
           });
+
+          // 디버깅용 로그
+          console.log(
+            `충돌 감지: ${id1} vs ${id2}, 거리: ${distance.toFixed(2)}`
+          );
         }
       }
     }
